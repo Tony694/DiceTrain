@@ -1,20 +1,33 @@
-/* CSS Variables */
+/* CSS Variables - Late 1800s Railroad Theme */
 :root {
-    --primary-color: #2c5530;
-    --primary-light: #4a7c50;
-    --secondary-color: #8b4513;
-    --gold-color: #ffd700;
-    --gold-dark: #b8860b;
-    --background: #1a1a2e;
-    --surface: #16213e;
-    --surface-light: #1f3460;
-    --text-primary: #eee;
-    --text-secondary: #aaa;
-    --player-1: #e74c3c;
-    --player-2: #3498db;
-    --player-3: #2ecc71;
-    --player-4: #9b59b6;
-    --danger: #c0392b;
+    /* Wood and leather tones */
+    --wood-dark: #2d1810;
+    --wood-medium: #4a2c1a;
+    --wood-light: #6b3d22;
+    --leather: #8b4513;
+
+    /* Aged paper and parchment */
+    --parchment: #d4c4a8;
+    --parchment-dark: #c4b393;
+    --aged-white: #e8e0d0;
+
+    /* Metal accents */
+    --brass: #b5893a;
+    --brass-light: #d4a84b;
+    --copper: #b87333;
+    --iron: #4a4a4a;
+
+    /* Functional colors */
+    --text-dark: #1a1208;
+    --text-medium: #3d2914;
+    --text-light: #e8e0d0;
+    --danger: #8b0000;
+
+    /* Player colors - vintage tones */
+    --player-1: #8b0000;
+    --player-2: #1a4a6e;
+    --player-3: #2d5a3d;
+    --player-4: #4a3728;
 }
 
 /* Reset */
@@ -25,9 +38,17 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--background);
-    color: var(--text-primary);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--wood-dark);
+    background-image:
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,0.1) 2px,
+            rgba(0,0,0,0.1) 4px
+        );
+    color: var(--text-dark);
     min-height: 100vh;
     line-height: 1.6;
 }
@@ -42,23 +63,35 @@ body {
     display: block;
 }
 
-/* Buttons */
+/* Buttons - Vintage wooden style */
 .btn {
     padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
+    border: 3px solid var(--brass);
+    border-radius: 4px;
     font-size: 1rem;
     font-weight: 600;
+    font-family: 'Georgia', serif;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.2),
+        0 4px 8px rgba(0,0,0,0.4);
 }
 
 .btn:hover {
     transform: translateY(-2px);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.2),
+        0 6px 12px rgba(0,0,0,0.5);
 }
 
 .btn:active {
     transform: translateY(0);
+    box-shadow:
+        inset 0 2px 4px rgba(0,0,0,0.3),
+        0 2px 4px rgba(0,0,0,0.3);
 }
 
 .btn:disabled {
@@ -68,21 +101,22 @@ body {
 }
 
 .btn-primary {
-    background: var(--primary-color);
-    color: white;
+    background: linear-gradient(to bottom, var(--leather), var(--wood-medium));
+    color: var(--aged-white);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
 .btn-primary:hover {
-    background: var(--primary-light);
+    background: linear-gradient(to bottom, var(--wood-light), var(--leather));
 }
 
 .btn-secondary {
-    background: var(--surface-light);
-    color: var(--text-primary);
+    background: linear-gradient(to bottom, var(--parchment), var(--parchment-dark));
+    color: var(--text-dark);
 }
 
 .btn-secondary:hover {
-    background: var(--surface);
+    background: linear-gradient(to bottom, var(--aged-white), var(--parchment));
 }
 
 .hidden {
@@ -90,27 +124,49 @@ body {
 }
 
 /* Setup Screen */
-#setup-screen {
+#setup-screen.active {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 40px;
+    background:
+        radial-gradient(ellipse at center, var(--wood-medium) 0%, var(--wood-dark) 70%);
 }
 
 #setup-screen h1 {
-    font-size: 3rem;
-    margin-bottom: 40px;
-    color: var(--gold-color);
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    font-size: 3.5rem;
+    margin-bottom: 10px;
+    color: var(--brass-light);
+    text-shadow:
+        2px 2px 0 var(--wood-dark),
+        4px 4px 8px rgba(0,0,0,0.5);
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+}
+
+#setup-screen::before {
+    content: "Est. 1869";
+    display: block;
+    font-size: 1rem;
+    color: var(--brass);
+    letter-spacing: 3px;
+    margin-bottom: 30px;
+    font-style: italic;
 }
 
 .setup-container {
-    background: var(--surface);
+    background:
+        linear-gradient(to bottom, var(--parchment), var(--parchment-dark));
     padding: 40px;
-    border-radius: 16px;
+    border-radius: 4px;
     min-width: 400px;
     max-width: 500px;
+    border: 4px solid var(--wood-light);
+    box-shadow:
+        inset 0 0 20px rgba(0,0,0,0.1),
+        0 10px 30px rgba(0,0,0,0.5);
 }
 
 .setup-option {
@@ -120,24 +176,30 @@ body {
 .setup-option label {
     display: block;
     margin-bottom: 8px;
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
 }
 
 .setup-option select,
 .setup-option input {
     width: 100%;
     padding: 12px;
-    border: 2px solid var(--surface-light);
-    border-radius: 8px;
-    background: var(--background);
-    color: var(--text-primary);
+    border: 2px solid var(--wood-light);
+    border-radius: 4px;
+    background: var(--aged-white);
+    color: var(--text-dark);
     font-size: 1rem;
+    font-family: 'Georgia', serif;
 }
 
 .setup-option select:focus,
 .setup-option input:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--brass);
+    box-shadow: 0 0 8px rgba(181, 137, 58, 0.4);
 }
 
 #player-names {
@@ -155,16 +217,19 @@ body {
     width: 24px;
     height: 24px;
     border-radius: 50%;
+    border: 2px solid var(--wood-dark);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .player-name-input input {
     flex: 1;
     padding: 10px;
-    border: 2px solid var(--surface-light);
-    border-radius: 8px;
-    background: var(--background);
-    color: var(--text-primary);
+    border: 2px solid var(--wood-light);
+    border-radius: 4px;
+    background: var(--aged-white);
+    color: var(--text-dark);
     font-size: 1rem;
+    font-family: 'Georgia', serif;
 }
 
 #start-game {
@@ -179,13 +244,17 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 16px 24px;
-    background: var(--surface);
-    border-bottom: 2px solid var(--surface-light);
+    background: linear-gradient(to bottom, var(--wood-medium), var(--wood-dark));
+    border-bottom: 4px solid var(--brass);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .round-info {
     font-size: 1.2rem;
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--parchment);
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 .phase-indicator {
@@ -195,40 +264,54 @@ body {
 
 .phase-indicator .phase {
     padding: 8px 16px;
-    border-radius: 20px;
-    background: var(--surface-light);
-    font-weight: 500;
-    opacity: 0.5;
+    border-radius: 4px;
+    background: var(--wood-dark);
+    border: 2px solid var(--iron);
+    font-weight: 600;
+    color: var(--parchment-dark);
+    opacity: 0.6;
     transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
 }
 
 .phase-indicator .phase.active {
-    background: var(--primary-color);
+    background: var(--brass);
+    border-color: var(--brass-light);
+    color: var(--wood-dark);
     opacity: 1;
+    box-shadow: 0 0 12px rgba(181, 137, 58, 0.5);
 }
 
 /* Game Main */
 .game-main {
     display: grid;
     grid-template-columns: 280px 1fr;
-    min-height: calc(100vh - 70px);
+    min-height: calc(100vh - 74px);
+    background: var(--wood-dark);
 }
 
 /* Players Panel */
 .players-panel {
-    background: var(--surface);
+    background:
+        linear-gradient(to right, var(--wood-medium), var(--wood-light));
     padding: 20px;
-    border-right: 2px solid var(--surface-light);
+    border-right: 4px solid var(--brass);
     overflow-y: auto;
 }
 
 .player-card {
-    background: var(--background);
-    border-radius: 12px;
+    background: var(--parchment);
+    border-radius: 4px;
     padding: 16px;
     margin-bottom: 16px;
-    border-left: 4px solid var(--player-1);
+    border: 3px solid var(--wood-dark);
+    border-left: 6px solid var(--player-1);
     transition: all 0.3s ease;
+    box-shadow:
+        inset 0 0 10px rgba(0,0,0,0.1),
+        2px 2px 8px rgba(0,0,0,0.3);
 }
 
 .player-card.player-2 { border-left-color: var(--player-2); }
@@ -236,14 +319,20 @@ body {
 .player-card.player-4 { border-left-color: var(--player-4); }
 
 .player-card.active {
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-    border-left-width: 6px;
+    box-shadow:
+        inset 0 0 10px rgba(0,0,0,0.1),
+        0 0 20px rgba(181, 137, 58, 0.6),
+        2px 2px 8px rgba(0,0,0,0.3);
+    border-color: var(--brass);
 }
 
 .player-card .player-name {
     font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: 12px;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .player-card .player-stats {
@@ -257,6 +346,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    color: var(--text-medium);
 }
 
 .player-stat .icon {
@@ -266,7 +356,7 @@ body {
 .player-card .player-train {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid var(--surface-light);
+    border-top: 2px dashed var(--wood-light);
 }
 
 .player-train-cars {
@@ -277,16 +367,21 @@ body {
 }
 
 .mini-car {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     padding: 2px 6px;
-    background: var(--surface-light);
-    border-radius: 4px;
+    background: var(--wood-light);
+    color: var(--parchment);
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Game Board */
 .game-board {
     padding: 24px;
     overflow-y: auto;
+    background:
+        radial-gradient(ellipse at top, var(--wood-medium) 0%, var(--wood-dark) 100%);
 }
 
 #current-player-display {
@@ -296,15 +391,24 @@ body {
 
 #current-player-display h2 {
     font-size: 1.5rem;
+    color: var(--parchment);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 /* Phase Content */
 .phase-content {
-    background: var(--surface);
-    border-radius: 16px;
+    background:
+        linear-gradient(to bottom, var(--parchment), var(--parchment-dark));
+    border-radius: 4px;
     padding: 32px;
     max-width: 800px;
     margin: 0 auto;
+    border: 4px solid var(--wood-light);
+    box-shadow:
+        inset 0 0 30px rgba(0,0,0,0.1),
+        0 10px 30px rgba(0,0,0,0.4);
 }
 
 /* Roll Phase */
@@ -315,7 +419,12 @@ body {
 .train-display h3,
 .dice-area h3 {
     margin-bottom: 16px;
-    color: var(--gold-color);
+    color: var(--wood-dark);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 1.1rem;
+    border-bottom: 2px solid var(--brass);
+    padding-bottom: 8px;
 }
 
 #train-cars-display {
@@ -325,22 +434,35 @@ body {
 }
 
 .train-car-tile {
-    background: var(--background);
-    border: 2px solid var(--surface-light);
-    border-radius: 12px;
+    background: var(--aged-white);
+    border: 3px solid var(--wood-medium);
+    border-radius: 4px;
     padding: 16px;
     min-width: 140px;
     text-align: center;
+    box-shadow:
+        inset 0 0 10px rgba(0,0,0,0.05),
+        2px 2px 6px rgba(0,0,0,0.2);
 }
 
 .train-car-tile .car-name {
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 8px;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    text-transform: uppercase;
 }
 
 .train-car-tile .car-die {
     font-size: 1.5rem;
-    color: var(--gold-color);
+    color: var(--brass);
+    font-weight: 700;
+}
+
+.train-car-tile .car-gold {
+    color: var(--copper);
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .dice-area {
@@ -357,17 +479,23 @@ body {
 }
 
 .die {
-    width: 60px;
-    height: 60px;
-    background: var(--background);
-    border: 3px solid var(--surface-light);
-    border-radius: 12px;
+    width: 64px;
+    height: 64px;
+    background:
+        linear-gradient(145deg, #f5f0e6, #d4c4a8);
+    border: 4px solid var(--wood-medium);
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
+    color: var(--text-dark);
     transition: all 0.3s ease;
+    box-shadow:
+        inset 0 2px 4px rgba(255,255,255,0.5),
+        inset 0 -2px 4px rgba(0,0,0,0.1),
+        3px 3px 8px rgba(0,0,0,0.3);
 }
 
 .die.rolling {
@@ -375,8 +503,13 @@ body {
 }
 
 .die.rolled {
-    border-color: var(--gold-color);
-    background: var(--surface-light);
+    border-color: var(--brass);
+    background: linear-gradient(145deg, #fff8e7, #e8dcc8);
+    box-shadow:
+        inset 0 2px 4px rgba(255,255,255,0.5),
+        inset 0 -2px 4px rgba(0,0,0,0.1),
+        0 0 12px rgba(181, 137, 58, 0.4),
+        3px 3px 8px rgba(0,0,0,0.3);
 }
 
 @keyframes diceRoll {
@@ -389,15 +522,20 @@ body {
 
 .die-label {
     font-size: 0.7rem;
-    color: var(--text-secondary);
+    color: var(--text-medium);
     margin-top: 4px;
+    text-transform: uppercase;
 }
 
 #roll-total {
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 24px;
-    color: var(--gold-color);
+    color: var(--wood-dark);
+}
+
+#roll-total span {
+    color: var(--brass);
 }
 
 /* Station Phase */
@@ -407,12 +545,20 @@ body {
 
 .station-display h3 {
     font-size: 1.8rem;
-    color: var(--gold-color);
+    color: var(--wood-dark);
     margin-bottom: 24px;
+    border-bottom: 3px solid var(--brass);
+    padding-bottom: 12px;
 }
 
 #station-earnings {
     margin-bottom: 32px;
+}
+
+#station-earnings > p {
+    color: var(--text-medium);
+    margin-bottom: 12px;
+    font-style: italic;
 }
 
 #earnings-breakdown {
@@ -425,39 +571,45 @@ body {
 .earning-item {
     display: flex;
     justify-content: space-between;
-    padding: 8px 16px;
-    background: var(--background);
-    border-radius: 8px;
+    padding: 10px 16px;
+    background: var(--aged-white);
+    border-radius: 4px;
+    border: 2px solid var(--wood-light);
 }
 
 .gold-display {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--gold-color);
+    color: var(--copper);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
 /* Shop Phase */
 .shop-display h3 {
     text-align: center;
     font-size: 1.8rem;
-    color: var(--gold-color);
+    color: var(--wood-dark);
     margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
 }
 
 .shop-instructions {
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--text-medium);
     margin-bottom: 16px;
+    font-style: italic;
 }
 
 .shop-gold {
     text-align: center;
     font-size: 1.3rem;
     margin-bottom: 24px;
+    color: var(--text-dark);
 }
 
 .shop-gold span {
-    color: var(--gold-color);
+    color: var(--copper);
     font-weight: 700;
 }
 
@@ -471,7 +623,10 @@ body {
 .shop-section h4 {
     margin-bottom: 16px;
     padding-bottom: 8px;
-    border-bottom: 2px solid var(--surface-light);
+    border-bottom: 2px solid var(--brass);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--wood-dark);
 }
 
 #train-car-shop,
@@ -479,25 +634,29 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .shop-item {
-    background: var(--background);
-    border: 2px solid var(--surface-light);
-    border-radius: 12px;
+    background: var(--aged-white);
+    border: 3px solid var(--wood-light);
+    border-radius: 4px;
     padding: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .shop-item:hover:not(.disabled) {
-    border-color: var(--gold-color);
+    border-color: var(--brass);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .shop-item.disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    background: var(--parchment-dark);
 }
 
 .shop-item-header {
@@ -508,17 +667,22 @@ body {
 }
 
 .shop-item-name {
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    font-size: 0.9rem;
 }
 
 .shop-item-cost {
-    color: var(--gold-color);
+    color: var(--copper);
     font-weight: 700;
+    font-size: 1.1rem;
 }
 
 .shop-item-desc {
     font-size: 0.85rem;
-    color: var(--text-secondary);
+    color: var(--text-medium);
+    font-style: italic;
 }
 
 #skip-shop {
@@ -527,40 +691,54 @@ body {
 }
 
 /* End Screen */
-#end-screen {
+#end-screen.active {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 40px;
+    background:
+        radial-gradient(ellipse at center, var(--wood-medium) 0%, var(--wood-dark) 70%);
 }
 
 #end-screen h1 {
     font-size: 3rem;
     margin-bottom: 40px;
-    color: var(--gold-color);
+    color: var(--brass-light);
+    text-shadow:
+        2px 2px 0 var(--wood-dark),
+        4px 4px 8px rgba(0,0,0,0.5);
+    text-transform: uppercase;
+    letter-spacing: 4px;
 }
 
 #final-standings {
-    background: var(--surface);
-    border-radius: 16px;
+    background: var(--parchment);
+    border-radius: 4px;
     padding: 32px;
     min-width: 400px;
     margin-bottom: 32px;
+    border: 4px solid var(--wood-light);
+    box-shadow:
+        inset 0 0 20px rgba(0,0,0,0.1),
+        0 10px 30px rgba(0,0,0,0.5);
 }
 
 .standing-row {
     display: flex;
     align-items: center;
     padding: 16px;
-    background: var(--background);
-    border-radius: 12px;
+    background: var(--aged-white);
+    border-radius: 4px;
     margin-bottom: 12px;
+    border: 2px solid var(--wood-light);
 }
 
 .standing-row:first-child {
-    background: linear-gradient(135deg, var(--gold-dark), var(--gold-color));
-    color: #000;
+    background: linear-gradient(135deg, var(--brass), var(--brass-light));
+    color: var(--wood-dark);
+    border-color: var(--copper);
+    box-shadow: 0 0 20px rgba(181, 137, 58, 0.4);
 }
 
 .standing-rank {
@@ -573,10 +751,13 @@ body {
     flex: 1;
     font-size: 1.2rem;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .standing-distance {
     font-size: 1.2rem;
+    font-weight: 600;
 }
 
 /* Responsive */
@@ -589,7 +770,7 @@ body {
         display: flex;
         overflow-x: auto;
         border-right: none;
-        border-bottom: 2px solid var(--surface-light);
+        border-bottom: 4px solid var(--brass);
     }
 
     .player-card {
@@ -601,4 +782,23 @@ body {
     .shop-sections {
         grid-template-columns: 1fr;
     }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--wood-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--wood-light);
+    border-radius: 4px;
+    border: 2px solid var(--wood-dark);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--leather);
 }
