@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dice Train</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="screen active">
+            <h1>Dice Train</h1>
+            <div class="setup-container">
+                <div class="setup-option">
+                    <label for="player-count">Number of Players</label>
+                    <select id="player-count">
+                        <option value="1">1 Player (Solo)</option>
+                        <option value="2" selected>2 Players</option>
+                        <option value="3">3 Players</option>
+                        <option value="4">4 Players</option>
+                    </select>
+                </div>
+                <div class="setup-option">
+                    <label for="round-count">Number of Rounds</label>
+                    <select id="round-count">
+                        <option value="5">5 Rounds</option>
+                        <option value="10" selected>10 Rounds</option>
+                        <option value="15">15 Rounds</option>
+                        <option value="20">20 Rounds</option>
+                    </select>
+                </div>
+                <div id="player-names"></div>
+                <button id="start-game" class="btn btn-primary">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <header class="game-header">
+                <div class="round-info">
+                    Round <span id="current-round">1</span> / <span id="total-rounds">10</span>
+                </div>
+                <div class="phase-indicator">
+                    <span class="phase" data-phase="roll">Roll</span>
+                    <span class="phase" data-phase="station">Station</span>
+                    <span class="phase" data-phase="shop">Shop</span>
+                </div>
+            </header>
+
+            <main class="game-main">
+                <!-- Player Panels -->
+                <aside class="players-panel">
+                    <div id="players-container"></div>
+                </aside>
+
+                <!-- Game Board -->
+                <section class="game-board">
+                    <div id="current-player-display">
+                        <h2>Current Turn: <span id="current-player-name">Player 1</span></h2>
+                    </div>
+
+                    <!-- Roll Phase -->
+                    <div id="roll-phase" class="phase-content">
+                        <div class="train-display">
+                            <h3>Your Train</h3>
+                            <div id="train-cars-display"></div>
+                        </div>
+                        <div class="dice-area">
+                            <h3>Your Dice</h3>
+                            <div id="dice-container"></div>
+                            <div id="roll-total" class="hidden">
+                                Total: <span id="total-miles">0</span> miles
+                            </div>
+                            <button id="roll-dice-btn" class="btn btn-primary">Roll Dice</button>
+                            <button id="continue-to-station" class="btn btn-secondary hidden">Continue to Station</button>
+                        </div>
+                    </div>
+
+                    <!-- Station Phase -->
+                    <div id="station-phase" class="phase-content hidden">
+                        <div class="station-display">
+                            <h3>Station Arrived!</h3>
+                            <div id="station-earnings">
+                                <p>Your train cars earned you:</p>
+                                <div id="earnings-breakdown"></div>
+                                <div id="total-earnings" class="gold-display">
+                                    +<span id="gold-earned">0</span> Gold
+                                </div>
+                            </div>
+                            <button id="continue-to-shop" class="btn btn-primary">Continue to Shop</button>
+                        </div>
+                    </div>
+
+                    <!-- Shop Phase -->
+                    <div id="shop-phase" class="phase-content hidden">
+                        <div class="shop-display">
+                            <h3>Train Depot</h3>
+                            <p class="shop-instructions">Purchase 1 train car OR 1 enhancement card (or skip)</p>
+                            <div class="shop-gold">
+                                Your Gold: <span id="shop-player-gold">0</span>
+                            </div>
+
+                            <div class="shop-sections">
+                                <div class="shop-section">
+                                    <h4>Train Cars</h4>
+                                    <div id="train-car-shop"></div>
+                                </div>
+                                <div class="shop-section">
+                                    <h4>Enhancement Cards</h4>
+                                    <div id="enhancement-shop"></div>
+                                </div>
+                            </div>
+
+                            <button id="skip-shop" class="btn btn-secondary">Skip Purchase</button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="screen">
+            <h1>Game Over!</h1>
+            <div id="final-standings"></div>
+            <button id="play-again" class="btn btn-primary">Play Again</button>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
