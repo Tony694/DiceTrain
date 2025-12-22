@@ -335,6 +335,33 @@ export function renderCardHand(cardHand, onPlayCard) {
     });
 }
 
+// Train car icons mapping (same as shop.js)
+const TRAIN_CAR_ICONS = {
+    coalTender: '\u{1F6D2}',
+    expressEngine: '\u{1F682}',
+    tankCar: '\u{1F6E2}\uFE0F',
+    coalHopper: '\u{1F4A8}',
+    locomotiveExtra: '\u{1F683}',
+    waterTower: '\u{1F4A7}',
+    passengerCar: '\u{1F68B}',
+    luxurySleeper: '\u{1F6CF}\uFE0F',
+    diningCar: '\u{1F37D}\uFE0F',
+    observationDeck: '\u{1F50D}',
+    firstClassCar: '\u{1F451}',
+    pullmanCar: '\u{2B50}',
+    freightCar: '\u{1F4E6}',
+    cargoHold: '\u{1F4E6}',
+    mailCar: '\u{1F4EC}',
+    stockCar: '\u{1F404}',
+    boxcar: '\u{1F4E6}',
+    gondolaCar: '\u{26CF}\uFE0F',
+    caboose: '\u{1F69D}'
+};
+
+function getCarIcon(carId) {
+    return TRAIN_CAR_ICONS[carId] || '\u{1F683}';
+}
+
 // Render train cars for current player
 export function renderTrainCars(trainCars) {
     elements.trainCarsDisplay.innerHTML = '';
@@ -353,7 +380,10 @@ export function renderTrainCars(trainCars) {
             extraInfo += `<div class="car-fuel">+${car.fuelPerStation} fuel</div>`;
         }
 
+        const icon = getCarIcon(car.id);
+
         tile.innerHTML = `
+            <span class="car-icon">${icon}</span>
             <div class="car-name">${car.name}</div>
             <div class="car-die">${car.die}</div>
             ${extraInfo}

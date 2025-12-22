@@ -151,26 +151,6 @@ export const TRAIN_CARS = {
         isStarting: false,
         type: 'passenger'
     },
-    refrigeratorCar: {
-        id: 'refrigeratorCar',
-        name: 'Refrigerator Car',
-        description: 'Keeps cargo fresh for premium prices.',
-        die: 'd6',
-        stationGold: 3,
-        cost: 9,
-        isStarting: false,
-        type: 'freight'
-    },
-    baggageCar: {
-        id: 'baggageCar',
-        name: 'Baggage Car',
-        description: 'Carries traveler luggage for tips.',
-        die: 'd6',
-        stationGold: 1,
-        cost: 4,
-        isStarting: false,
-        type: 'passenger'
-    },
     boxcar: {
         id: 'boxcar',
         name: 'Boxcar',

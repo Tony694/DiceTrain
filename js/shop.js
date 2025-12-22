@@ -1,5 +1,40 @@
 // Shop system for Dice Train
 
+// Train car icons mapping
+const TRAIN_CAR_ICONS = {
+    // Coal/Engine types
+    coalTender: '\u{1F6D2}',      // Shopping cart (coal bin)
+    expressEngine: '\u{1F682}',   // Steam locomotive
+    tankCar: '\u{1F6E2}\uFE0F',   // Oil drum
+    coalHopper: '\u{1F4A8}',      // Steam/smoke
+    locomotiveExtra: '\u{1F683}', // Railway car
+    waterTower: '\u{1F4A7}',      // Water droplet
+
+    // Passenger types
+    passengerCar: '\u{1F68B}',    // Tram car
+    luxurySleeper: '\u{1F6CF}\uFE0F', // Bed
+    diningCar: '\u{1F37D}\uFE0F', // Fork and knife with plate
+    observationDeck: '\u{1F50D}', // Magnifying glass
+    firstClassCar: '\u{1F451}',   // Crown
+    pullmanCar: '\u{2B50}',       // Star
+
+    // Freight types
+    freightCar: '\u{1F4E6}',      // Package
+    cargoHold: '\u{1F4E6}',       // Package
+    mailCar: '\u{1F4EC}',         // Mailbox
+    stockCar: '\u{1F404}',        // Cow
+    boxcar: '\u{1F4E6}',          // Package
+    gondolaCar: '\u{26CF}\uFE0F', // Pick (mining)
+
+    // Special types
+    caboose: '\u{1F69D}'          // Monorail (tail car)
+};
+
+// Get icon for a train car
+function getCarIcon(carId) {
+    return TRAIN_CAR_ICONS[carId] || '\u{1F683}'; // Default to railway car
+}
+
 // Render train cars for purchase (4x4 grid, sorted by price)
 export function renderTrainCarShop(container, cars, playerGold, onPurchase) {
     container.innerHTML = '';
@@ -26,7 +61,10 @@ export function renderTrainCarShop(container, cars, playerGold, onPurchase) {
             specialInfo = `<span class="car-gold-tag">+${car.stationGold}g/Stn</span>`;
         }
 
+        const icon = getCarIcon(car.id);
+
         item.innerHTML = `
+            <div class="car-icon">${icon}</div>
             <div class="car-cost">${car.cost}g</div>
             <div class="car-name">${car.name}</div>
             <div class="car-die">${car.die}</div>

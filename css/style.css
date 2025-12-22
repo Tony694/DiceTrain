@@ -540,6 +540,10 @@ body {
         2px 2px 6px rgba(0,0,0,0.2);
 }
 
+.train-car-tile .car-icon {
+    font-size: 1.4rem;
+}
+
 .train-car-tile .car-name {
     font-weight: 700;
     margin-bottom: 0;
@@ -717,8 +721,8 @@ body {
 }
 
 .shop-sections {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
     gap: 24px;
     margin-bottom: 24px;
 }
@@ -732,27 +736,26 @@ body {
     color: var(--wood-dark);
 }
 
-/* Train Car Shop - 4x4 Grid */
+/* Train Car Shop - 4x4 Grid (14 cars) */
 #train-car-shop {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    max-height: 500px;
-    overflow-y: auto;
+    gap: 6px;
 }
 
 .shop-car-item {
     background: var(--aged-white);
     border: 2px solid var(--wood-light);
     border-radius: 4px;
-    padding: 8px;
+    padding: 4px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 90px;
+    min-height: 72px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    align-items: center;
 }
 
 .shop-car-item:hover:not(.disabled) {
@@ -767,23 +770,29 @@ body {
     background: var(--parchment-dark);
 }
 
+.shop-car-item .car-icon {
+    font-size: 1.1rem;
+    margin-bottom: 1px;
+}
+
 .shop-car-item .car-cost {
     font-weight: 700;
     color: var(--copper);
-    font-size: 1rem;
+    font-size: 0.8rem;
 }
 
 .shop-car-item .car-name {
     font-weight: 600;
     color: var(--text-dark);
-    font-size: 0.75rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin: 4px 0;
+    margin: 1px 0;
+    line-height: 1.1;
 }
 
 .shop-car-item .car-die {
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     color: var(--brass);
     font-weight: 700;
 }
@@ -791,10 +800,10 @@ body {
 .car-special-tag,
 .car-fuel-tag,
 .car-gold-tag {
-    font-size: 0.65rem;
-    padding: 2px 4px;
+    font-size: 0.55rem;
+    padding: 1px 3px;
     border-radius: 2px;
-    margin-top: 4px;
+    margin-top: 2px;
     display: inline-block;
 }
 
@@ -1001,6 +1010,10 @@ body {
 
     #train-car-shop {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    .shop-sections {
+        grid-template-columns: 1fr;
     }
 
     .railroad-map {
