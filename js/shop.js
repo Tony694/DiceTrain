@@ -1,25 +1,36 @@
 // Shop system for Dice Train
 
-// Render train cars for purchase
+// Render train cars for purchase (4x4 grid, sorted by price)
 export function renderTrainCarShop(container, cars, playerGold, onPurchase) {
     container.innerHTML = '';
 
-    cars.forEach(car => {
+    // Sort cars by cost (lowest to highest)
+    const sortedCars = [...cars].sort((a, b) => a.cost - b.cost);
+
+    sortedCars.forEach(car => {
         const item = document.createElement('div');
-        item.className = 'shop-item';
+        item.className = 'shop-car-item';
         if (playerGold < car.cost) {
             item.classList.add('disabled');
         }
 
+        // Build special info string
+        let specialInfo = '';
+        if (car.special === 'halfRollGold') {
+            specialInfo = '<span class="car-special-tag">Half Roll = Gold</span>';
+        } else if (car.special === 'lowestDieBonus') {
+            specialInfo = '<span class="car-special-tag">+1 Lowest Die</span>';
+        } else if (car.fuelPerStation) {
+            specialInfo = `<span class="car-fuel-tag">+${car.fuelPerStation} Fuel/Stn</span>`;
+        } else if (car.stationGold > 0) {
+            specialInfo = `<span class="car-gold-tag">+${car.stationGold}g/Stn</span>`;
+        }
+
         item.innerHTML = `
-            <div class="shop-item-header">
-                <span class="shop-item-name">${car.name}</span>
-                <span class="shop-item-cost">${car.cost}g</span>
-            </div>
-            <div class="shop-item-desc">
-                ${car.description}<br>
-                <strong>${car.die}</strong> | Station: <strong>+${car.stationGold}g</strong>
-            </div>
+            <div class="car-cost">${car.cost}g</div>
+            <div class="car-name">${car.name}</div>
+            <div class="car-die">${car.die}</div>
+            ${specialInfo}
         `;
 
         if (playerGold >= car.cost) {
@@ -46,12 +57,16 @@ export function renderEnhancementShop(container, cards, playerGold, onPurchase) 
             item.classList.add('disabled');
         }
 
+        const cardType = card.persistent ? 'Permanent' : 'One-Time';
+        const cardTypeClass = card.persistent ? 'card-persistent' : 'card-onetime';
+
         item.innerHTML = `
             <div class="shop-item-header">
                 <span class="shop-item-name">${card.name}</span>
                 <span class="shop-item-cost">${card.cost}g</span>
             </div>
             <div class="shop-item-desc">${card.description}</div>
+            <div class="shop-item-type ${cardTypeClass}">${cardType}</div>
         `;
 
         if (playerGold >= card.cost) {

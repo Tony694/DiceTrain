@@ -286,19 +286,57 @@ body {
 
 /* Game Main */
 .game-main {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    min-height: calc(100vh - 74px);
+    display: block;
     background: var(--wood-dark);
+    padding: 16px 24px;
+    padding-bottom: 180px; /* Space for fixed players panel + bottom controls */
 }
 
-/* Players Panel */
-.players-panel {
-    background:
-        linear-gradient(to right, var(--wood-medium), var(--wood-light));
-    padding: 20px;
-    border-right: 4px solid var(--brass);
-    overflow-y: auto;
+/* Players Panel - Fixed Bottom Layout */
+.players-panel-bottom {
+    position: fixed;
+    bottom: 64px; /* Above bottom controls */
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, var(--wood-medium), var(--wood-light));
+    padding: 10px 24px;
+    border-top: 4px solid var(--brass);
+    z-index: 99;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
+}
+
+.players-panel-bottom #players-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.players-panel-bottom .player-card {
+    min-width: 160px;
+    max-width: 200px;
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    padding: 10px 12px;
+}
+
+.players-panel-bottom .player-card .player-name {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.players-panel-bottom .player-card .player-stats {
+    font-size: 0.8rem;
+}
+
+/* Current Player in Header */
+#current-player-display {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--brass-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .player-card {
@@ -402,8 +440,8 @@ body {
     background:
         linear-gradient(to bottom, var(--parchment), var(--parchment-dark));
     border-radius: 4px;
-    padding: 32px;
-    max-width: 800px;
+    padding: 24px;
+    max-width: 1200px;
     margin: 0 auto;
     border: 4px solid var(--wood-light);
     box-shadow:
@@ -411,35 +449,92 @@ body {
         0 10px 30px rgba(0,0,0,0.4);
 }
 
-/* Roll Phase */
-.train-display {
-    margin-bottom: 32px;
+/* Roll Phase - 3 Column Layout */
+.roll-phase-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 20px;
+    padding: 20px;
 }
 
-.train-display h3,
+.roll-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.roll-column-left {
+    border-right: 2px solid var(--wood-light);
+    padding-right: 20px;
+}
+
+.roll-column-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.roll-column-right {
+    border-left: 2px solid var(--wood-light);
+    padding-left: 20px;
+}
+
+.roll-column h3 {
+    color: var(--wood-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--brass);
+}
+
+.dice-buttons {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Roll Phase */
+.train-display {
+    margin-bottom: 0;
+}
+
+.train-display h3 {
+    margin-bottom: 12px;
+    color: var(--wood-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1rem;
+    border-bottom: 2px solid var(--brass);
+    padding-bottom: 8px;
+}
+
 .dice-area h3 {
     margin-bottom: 16px;
     color: var(--wood-dark);
     text-transform: uppercase;
-    letter-spacing: 2px;
-    font-size: 1.1rem;
+    letter-spacing: 1px;
+    font-size: 1rem;
     border-bottom: 2px solid var(--brass);
     padding-bottom: 8px;
 }
 
 #train-cars-display {
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .train-car-tile {
     background: var(--aged-white);
-    border: 3px solid var(--wood-medium);
+    border: 2px solid var(--wood-medium);
     border-radius: 4px;
-    padding: 16px;
-    min-width: 140px;
-    text-align: center;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     box-shadow:
         inset 0 0 10px rgba(0,0,0,0.05),
         2px 2px 6px rgba(0,0,0,0.2);
@@ -447,22 +542,30 @@ body {
 
 .train-car-tile .car-name {
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 0;
     color: var(--text-dark);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
+    flex: 1;
 }
 
 .train-car-tile .car-die {
-    font-size: 1.5rem;
+    font-size: 1rem;
     color: var(--brass);
     font-weight: 700;
+    min-width: 30px;
+    text-align: center;
 }
 
 .train-car-tile .car-gold {
     color: var(--copper);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
+}
+
+.train-car-tile .car-special,
+.train-car-tile .car-fuel {
+    font-size: 0.65rem;
 }
 
 .dice-area {
@@ -614,8 +717,8 @@ body {
 }
 
 .shop-sections {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 24px;
     margin-bottom: 24px;
 }
@@ -629,7 +732,88 @@ body {
     color: var(--wood-dark);
 }
 
-#train-car-shop,
+/* Train Car Shop - 4x4 Grid */
+#train-car-shop {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.shop-car-item {
+    background: var(--aged-white);
+    border: 2px solid var(--wood-light);
+    border-radius: 4px;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.shop-car-item:hover:not(.disabled) {
+    border-color: var(--brass);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.shop-car-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--parchment-dark);
+}
+
+.shop-car-item .car-cost {
+    font-weight: 700;
+    color: var(--copper);
+    font-size: 1rem;
+}
+
+.shop-car-item .car-name {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 4px 0;
+}
+
+.shop-car-item .car-die {
+    font-size: 0.9rem;
+    color: var(--brass);
+    font-weight: 700;
+}
+
+.car-special-tag,
+.car-fuel-tag,
+.car-gold-tag {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    border-radius: 2px;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.car-special-tag {
+    background: var(--copper);
+    color: var(--aged-white);
+}
+
+.car-fuel-tag {
+    background: var(--wood-light);
+    color: var(--parchment);
+}
+
+.car-gold-tag {
+    background: var(--brass);
+    color: var(--wood-dark);
+}
+
+/* Enhancement Card Shop */
 #enhancement-shop {
     display: flex;
     flex-direction: column;
@@ -761,26 +945,84 @@ body {
 }
 
 /* Responsive */
+@media (max-width: 1000px) {
+    .roll-phase-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .roll-column-left,
+    .roll-column-right {
+        border: none;
+        padding: 0;
+    }
+
+    .roll-column-left {
+        order: 2;
+    }
+
+    .roll-column-center {
+        order: 1;
+    }
+
+    .roll-column-right {
+        order: 3;
+    }
+
+    #card-hand {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    #train-cars-display {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .train-car-tile {
+        min-width: 120px;
+    }
+}
+
 @media (max-width: 900px) {
-    .game-main {
-        grid-template-columns: 1fr;
+    .players-panel-bottom {
+        padding: 8px 12px;
     }
 
-    .players-panel {
-        display: flex;
-        overflow-x: auto;
-        border-right: none;
-        border-bottom: 4px solid var(--brass);
+    .players-panel-bottom #players-container {
+        justify-content: flex-start;
+        gap: 8px;
     }
 
-    .player-card {
-        min-width: 200px;
-        margin-right: 16px;
-        margin-bottom: 0;
+    .players-panel-bottom .player-card {
+        min-width: 140px;
+        padding: 8px 10px;
     }
 
-    .shop-sections {
-        grid-template-columns: 1fr;
+    #train-car-shop {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .railroad-map {
+        padding: 8px 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    #train-car-shop {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .players-panel-bottom .player-card {
+        min-width: 120px;
+    }
+
+    .players-panel-bottom .player-card .player-name {
+        font-size: 0.85rem;
+    }
+
+    .players-panel-bottom .player-card .player-stats {
+        font-size: 0.75rem;
     }
 }
 
@@ -801,4 +1043,430 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--leather);
+}
+
+/* Draft Screen */
+#draft-screen.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: radial-gradient(ellipse at center, var(--wood-medium) 0%, var(--wood-dark) 70%);
+}
+
+.draft-container {
+    background: linear-gradient(to bottom, var(--parchment), var(--parchment-dark));
+    padding: 40px;
+    border-radius: 4px;
+    border: 4px solid var(--wood-light);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.1), 0 10px 30px rgba(0,0,0,0.5);
+    text-align: center;
+    max-width: 800px;
+}
+
+.draft-container h2 {
+    color: var(--wood-dark);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.draft-player {
+    font-size: 1.2rem;
+    color: var(--brass);
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.draft-instructions {
+    color: var(--text-medium);
+    font-style: italic;
+    margin-bottom: 24px;
+}
+
+#draft-cards {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.draft-card {
+    background: var(--aged-white);
+    border: 3px solid var(--wood-light);
+    border-radius: 8px;
+    padding: 20px;
+    width: 200px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.draft-card:hover {
+    border-color: var(--brass);
+    transform: translateY(-4px);
+}
+
+.draft-card.selected {
+    border-color: var(--brass);
+    background: linear-gradient(to bottom, #fff8e7, #e8dcc8);
+    box-shadow: 0 0 20px rgba(181, 137, 58, 0.5);
+}
+
+.draft-card .card-name {
+    font-weight: 700;
+    color: var(--wood-dark);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.draft-card .card-desc {
+    font-size: 0.9rem;
+    color: var(--text-medium);
+    font-style: italic;
+}
+
+#confirm-draft:disabled {
+    opacity: 0.5;
+}
+
+/* Card Hand Section */
+.card-hand-section {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 0;
+    border-radius: 0;
+    border: none;
+}
+
+.card-hand-section h3 {
+    color: var(--wood-dark);
+    margin-bottom: 12px;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--brass);
+}
+
+#card-hand {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 60px;
+}
+
+.hand-card {
+    background: var(--parchment);
+    border: 2px solid var(--wood-dark);
+    border-radius: 4px;
+    padding: 12px;
+    min-width: 150px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.hand-card:hover {
+    border-color: var(--brass);
+    transform: translateY(-2px);
+}
+
+.hand-card .card-name {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--wood-dark);
+    margin-bottom: 4px;
+}
+
+.hand-card .card-desc {
+    font-size: 0.75rem;
+    color: var(--text-medium);
+}
+
+.hand-card .play-btn {
+    margin-top: 8px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+}
+
+.no-cards {
+    color: var(--parchment-dark);
+    font-style: italic;
+}
+
+/* Player Resources */
+.player-resources {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--aged-white);
+    border-radius: 4px;
+    border: 2px solid var(--wood-light);
+}
+
+.player-resources .resource {
+    font-weight: 600;
+    color: var(--wood-dark);
+}
+
+.player-resources .resource span {
+    color: var(--brass);
+}
+
+/* Fuel Display */
+.fuel-display {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--wood-light);
+    margin-top: 8px;
+}
+
+#fuel-bonus {
+    color: var(--brass);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+#reroll-info {
+    color: var(--copper);
+    font-style: italic;
+    margin-bottom: 16px;
+}
+
+/* Railroad Map Board */
+.railroad-map {
+    background: var(--wood-dark);
+    padding: 16px 24px;
+    position: relative;
+}
+
+.map-container {
+    background: var(--aged-white);
+    border: 4px solid var(--wood-medium);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow:
+        inset 0 0 20px rgba(0,0,0,0.1),
+        0 4px 12px rgba(0,0,0,0.3);
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+#railroad-svg {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    display: block;
+}
+
+.map-legend {
+    margin-top: 8px;
+}
+
+#player-positions {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    font-size: 0.85rem;
+}
+
+.position-entry {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.position-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--wood-dark);
+}
+
+.position-dot.player-1 { background: var(--player-1); }
+.position-dot.player-2 { background: var(--player-2); }
+.position-dot.player-3 { background: var(--player-3); }
+.position-dot.player-4 { background: var(--player-4); }
+
+/* City markers on map */
+.city-marker {
+    fill: var(--brass);
+    stroke: var(--wood-dark);
+    stroke-width: 2;
+}
+
+.city-label {
+    font-family: 'Georgia', serif;
+    font-size: 9px;
+    fill: var(--text-dark);
+    text-anchor: middle;
+}
+
+.track-line {
+    stroke: var(--wood-medium);
+    stroke-width: 4;
+    fill: none;
+}
+
+.track-ties {
+    stroke: var(--wood-dark);
+    stroke-width: 2;
+}
+
+.train-token {
+    stroke: var(--wood-dark);
+    stroke-width: 2;
+}
+
+.train-token.player-1 { fill: var(--player-1); }
+.train-token.player-2 { fill: var(--player-2); }
+.train-token.player-3 { fill: var(--player-3); }
+.train-token.player-4 { fill: var(--player-4); }
+
+/* Bottom Controls */
+.bottom-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: linear-gradient(to bottom, var(--wood-medium), var(--wood-dark));
+    border-top: 3px solid var(--brass);
+    z-index: 100;
+}
+
+#back-to-menu {
+    font-size: 0.85rem;
+    padding: 8px 16px;
+}
+
+.sound-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sound-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--brass);
+    background: var(--wood-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.sound-btn:hover {
+    background: var(--leather);
+    transform: scale(1.1);
+}
+
+.sound-btn.muted {
+    opacity: 0.5;
+}
+
+.sound-icon {
+    font-size: 1.2rem;
+}
+
+.volume-slider {
+    width: 100px;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--wood-dark);
+    border-radius: 4px;
+    outline: none;
+    border: 1px solid var(--brass);
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--brass);
+    border: 2px solid var(--wood-dark);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--brass);
+    border: 2px solid var(--wood-dark);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Adjust game main to account for bottom controls */
+.game-main {
+    min-height: calc(100vh - 74px - 280px - 64px);
+}
+
+/* Train car special abilities */
+.car-special {
+    color: var(--copper);
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.car-fuel {
+    color: var(--wood-light);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Card type labels */
+.shop-item-type {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.card-persistent {
+    background: var(--brass);
+    color: var(--wood-dark);
+}
+
+.card-onetime {
+    background: var(--wood-light);
+    color: var(--parchment);
+}
+
+.draft-card .card-type {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 8px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+/* Game board padding for bottom controls */
+.game-board {
+    padding-bottom: 80px;
+}
+
+/* Adjust end screen for no bottom controls */
+#end-screen .bottom-controls {
+    display: none;
 }

@@ -1,6 +1,6 @@
 // Main entry point for Dice Train
 
-import { Game, PHASES } from './game.js';
+import { Game, PHASES, GAME_STATES } from './game.js';
 import {
     initUI,
     getElements,
@@ -10,6 +10,7 @@ import {
     showPhase,
     updateRoundDisplay,
     updateCurrentPlayer,
+    updatePlayerResources,
     renderPlayerPanels,
     renderTrainCars,
     renderDicePreRoll,
@@ -17,12 +18,18 @@ import {
     renderDiceResults,
     renderStationEarnings,
     renderShop,
-    renderStandings
+    renderStandings,
+    renderDraftCards,
+    updateDraftPlayer,
+    renderCardHand
 } from './ui.js';
+import { soundSystem } from './sound.js';
+import { initRailroadMap, updatePlayerPositions } from './map.js';
 
 // Game instance
 let game = new Game();
 let elements;
+let audioInitialized = false;
 
 // Initialize the application
 function init() {
@@ -31,25 +38,97 @@ function init() {
     showScreen('setup');
 }
 
+// Ensure audio is initialized on first user interaction
+function ensureAudioInit() {
+    if (!audioInitialized) {
+        soundSystem.init();
+        audioInitialized = true;
+    }
+}
+
 // Setup event listeners
 function setupEventListeners() {
     // Start game button
-    elements.startGame.addEventListener('click', startGame);
+    elements.startGame.addEventListener('click', () => {
+        ensureAudioInit();
+        soundSystem.playClick();
+        startGame();
+    });
+
+    // Draft confirm
+    elements.confirmDraft.addEventListener('click', () => {
+        soundSystem.playClick();
+        handleConfirmDraft();
+    });
 
     // Roll dice button
-    elements.rollDiceBtn.addEventListener('click', handleRollDice);
+    elements.rollDiceBtn.addEventListener('click', () => {
+        soundSystem.playClick();
+        handleRollDice();
+    });
 
     // Continue to station
-    elements.continueToStation.addEventListener('click', handleContinueToStation);
+    elements.continueToStation.addEventListener('click', () => {
+        soundSystem.playPhaseTransition();
+        handleContinueToStation();
+    });
 
     // Continue to shop
-    elements.continueToShop.addEventListener('click', handleContinueToShop);
+    elements.continueToShop.addEventListener('click', () => {
+        soundSystem.playPhaseTransition();
+        handleContinueToShop();
+    });
 
-    // Skip shop
-    elements.skipShop.addEventListener('click', handleEndTurn);
+    // Skip shop / End turn
+    elements.skipShop.addEventListener('click', () => {
+        soundSystem.playClick();
+        handleEndTurn();
+    });
 
     // Play again
-    elements.playAgain.addEventListener('click', handlePlayAgain);
+    elements.playAgain.addEventListener('click', () => {
+        soundSystem.playClick();
+        handlePlayAgain();
+    });
+
+    // Back to main menu
+    const backToMenuBtn = document.getElementById('back-to-menu');
+    if (backToMenuBtn) {
+        backToMenuBtn.addEventListener('click', () => {
+            soundSystem.playClick();
+            handleBackToMenu();
+        });
+    }
+
+    // Sound controls
+    const soundToggle = document.getElementById('sound-toggle');
+    const volumeSlider = document.getElementById('volume-slider');
+
+    if (soundToggle) {
+        soundToggle.addEventListener('click', () => {
+            ensureAudioInit();
+            const muted = soundSystem.toggleMute();
+            soundToggle.classList.toggle('muted', muted);
+            soundToggle.querySelector('.sound-icon').textContent = muted ? '\u{1F507}' : '\u{1F50A}';
+            if (!muted) soundSystem.playClick();
+        });
+    }
+
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', (e) => {
+            ensureAudioInit();
+            const volume = parseInt(e.target.value) / 100;
+            soundSystem.setVolume(volume);
+        });
+        // Set initial volume
+        soundSystem.setVolume(0.5);
+    }
+}
+
+// Handle back to main menu
+function handleBackToMenu() {
+    game = new Game();
+    showScreen('setup');
 }
 
 // Start a new game
@@ -59,8 +138,48 @@ function startGame() {
 
     game.initialize(playerNames, roundCount);
 
-    showScreen('game');
-    updateGameDisplay();
+    soundSystem.playGameStart();
+
+    // Go to draft screen
+    showScreen('draft');
+    updateDraftDisplay();
+}
+
+// Update draft display
+function updateDraftDisplay() {
+    const state = game.getState();
+    const player = game.getCurrentPlayer();
+
+    updateDraftPlayer(player.name);
+    renderDraftCards(state.draftCards, state.draftSelections, handleToggleDraftCard);
+}
+
+// Handle toggling a draft card selection
+function handleToggleDraftCard(cardIndex) {
+    soundSystem.playDraftSelect();
+    game.toggleDraftSelection(cardIndex);
+    updateDraftDisplay();
+}
+
+// Handle confirming draft selections
+function handleConfirmDraft() {
+    const result = game.confirmDraft();
+
+    if (game.gameState === GAME_STATES.PLAYING) {
+        // All players drafted, start the game
+        showScreen('game');
+
+        // Initialize the railroad map
+        const mapSvg = document.getElementById('railroad-svg');
+        const positionsContainer = document.getElementById('player-positions');
+        initRailroadMap(mapSvg);
+        updatePlayerPositions(mapSvg, game.players, positionsContainer);
+
+        updateGameDisplay();
+    } else {
+        // Next player drafts
+        updateDraftDisplay();
+    }
 }
 
 // Update the entire game display
@@ -71,13 +190,22 @@ function updateGameDisplay() {
     updateRoundDisplay(state.currentRound, state.totalRounds);
     renderPlayerPanels(game.players, game.currentPlayerIndex);
     updateCurrentPlayer(player);
+    updatePlayerResources(player);
+
+    // Update railroad map
+    const mapSvg = document.getElementById('railroad-svg');
+    const positionsContainer = document.getElementById('player-positions');
+    updatePlayerPositions(mapSvg, game.players, positionsContainer);
+
+    // Render card hand
+    renderCardHand(player.cardHand, handlePlayCard);
 
     showPhase(state.phase);
 
     switch (state.phase) {
         case PHASES.ROLL:
             renderTrainCars(player.trainCars);
-            renderDicePreRoll(player.trainCars);
+            renderDicePreRoll(player.trainCars, player.fuel);
             break;
         case PHASES.STATION:
             // Already rendered when advancing to station
@@ -94,25 +222,39 @@ function updateGameDisplay() {
     }
 }
 
+// Handle playing a card from hand
+function handlePlayCard(cardIndex) {
+    soundSystem.playCardPlay();
+    const success = game.playCardFromHand(cardIndex);
+    if (success) {
+        updateGameDisplay();
+    }
+}
+
 // Handle roll dice
 async function handleRollDice() {
     elements.rollDiceBtn.disabled = true;
 
-    // Start animation
+    // Start animation and sound
+    soundSystem.playDiceRoll();
     await animateDiceRoll(800);
 
     // Actually roll
     const results = game.rollDice();
     const player = game.getCurrentPlayer();
     const total = player.getLastRollTotal();
-    const canReroll = player.rerollsRemaining > 0;
+    const rerollsRemaining = player.getTotalRerollsRemaining();
+    const fuelBonus = player.fuel;
 
-    renderDiceResults(results, total, canReroll);
+    renderDiceResults(results, total, rerollsRemaining, fuelBonus);
 
     // Setup reroll handlers if available
-    if (canReroll) {
+    if (rerollsRemaining > 0) {
         setupRerollHandlers();
     }
+
+    // Update player resources (fuel may have changed display)
+    updatePlayerResources(player);
 
     elements.rollDiceBtn.disabled = false;
 }
@@ -128,17 +270,20 @@ function setupRerollHandlers() {
 // Handle reroll
 async function handleReroll(dieIndex) {
     const player = game.getCurrentPlayer();
-    if (player.rerollsRemaining <= 0) return;
+    if (!player.canReroll()) return;
 
+    soundSystem.playClick();
     const success = game.rerollDie(dieIndex);
     if (success) {
         const results = player.lastRollResults;
         const total = player.getLastRollTotal();
-        const canReroll = player.rerollsRemaining > 0;
+        const rerollsRemaining = player.getTotalRerollsRemaining();
+        const fuelBonus = player.fuel;
 
-        renderDiceResults(results, total, canReroll);
+        renderDiceResults(results, total, rerollsRemaining, fuelBonus);
+        updatePlayerResources(player);
 
-        if (canReroll) {
+        if (rerollsRemaining > 0) {
             setupRerollHandlers();
         }
     }
@@ -149,7 +294,8 @@ function handleContinueToStation() {
     const result = game.advanceToStation();
 
     if (result) {
-        renderStationEarnings(result.earnings);
+        soundSystem.playStationArrival();
+        renderStationEarnings(result.earnings, result.fuelGained);
         updateGameDisplay();
     }
 }
@@ -164,7 +310,9 @@ function handleContinueToShop() {
 function handlePurchaseTrainCar(carId) {
     const success = game.purchaseTrainCar(carId);
     if (success) {
-        handleEndTurn();
+        soundSystem.playPurchase();
+        // Refresh shop display to show updated gold and remaining cars
+        refreshShopDisplay();
     }
 }
 
@@ -172,8 +320,27 @@ function handlePurchaseTrainCar(carId) {
 function handlePurchaseCard(cardIndex) {
     const success = game.purchaseCard(cardIndex);
     if (success) {
-        handleEndTurn();
+        soundSystem.playPurchase();
+        // Refresh shop display and card hand
+        refreshShopDisplay();
+        const player = game.getCurrentPlayer();
+        renderCardHand(player.cardHand, handlePlayCard);
     }
+}
+
+// Refresh shop display after a purchase
+function refreshShopDisplay() {
+    const state = game.getState();
+    const player = game.getCurrentPlayer();
+    renderPlayerPanels(game.players, game.currentPlayerIndex);
+    updatePlayerResources(player);
+    renderShop(
+        player,
+        state.availableCars,
+        state.availableCards,
+        handlePurchaseTrainCar,
+        handlePurchaseCard
+    );
 }
 
 // Handle end turn

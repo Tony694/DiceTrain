@@ -15,8 +15,8 @@
                 <div class="setup-option">
                     <label for="player-count">Number of Players</label>
                     <select id="player-count">
-                        <option value="1">1 Player (Solo)</option>
-                        <option value="2" selected>2 Players</option>
+                        <option value="1" selected>1 Player (Solo)</option>
+                        <option value="2">2 Players</option>
                         <option value="3">3 Players</option>
                         <option value="4">4 Players</option>
                     </select>
@@ -24,14 +24,25 @@
                 <div class="setup-option">
                     <label for="round-count">Number of Rounds</label>
                     <select id="round-count">
-                        <option value="5">5 Rounds</option>
-                        <option value="10" selected>10 Rounds</option>
-                        <option value="15">15 Rounds</option>
+                        <option value="8">8 Rounds</option>
+                        <option value="12" selected>12 Rounds</option>
+                        <option value="16">16 Rounds</option>
                         <option value="20">20 Rounds</option>
                     </select>
                 </div>
                 <div id="player-names"></div>
                 <button id="start-game" class="btn btn-primary">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Draft Screen -->
+        <div id="draft-screen" class="screen">
+            <div class="draft-container">
+                <h2>Card Draft</h2>
+                <p class="draft-player">Player: <span id="draft-player-name">Player 1</span></p>
+                <p class="draft-instructions">Select 2 of 3 cards to add to your hand</p>
+                <div id="draft-cards"></div>
+                <button id="confirm-draft" class="btn btn-primary" disabled>Confirm Selection (0/2)</button>
             </div>
         </div>
 
@@ -41,6 +52,9 @@
                 <div class="round-info">
                     Round <span id="current-round">1</span> / <span id="total-rounds">10</span>
                 </div>
+                <div id="current-player-display">
+                    <span id="current-player-name">Player 1</span>'s Turn
+                </div>
                 <div class="phase-indicator">
                     <span class="phase" data-phase="roll">Roll</span>
                     <span class="phase" data-phase="station">Station</span>
@@ -48,75 +62,121 @@
                 </div>
             </header>
 
-            <main class="game-main">
-                <!-- Player Panels -->
-                <aside class="players-panel">
-                    <div id="players-container"></div>
-                </aside>
+            <!-- Railroad Map Board -->
+            <div id="railroad-map" class="railroad-map">
+                <div class="map-container">
+                    <svg id="railroad-svg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet">
+                        <!-- Map background and tracks will be drawn by JS -->
+                    </svg>
+                </div>
+                <div class="map-legend">
+                    <div id="player-positions"></div>
+                </div>
+            </div>
 
-                <!-- Game Board -->
-                <section class="game-board">
-                    <div id="current-player-display">
-                        <h2>Current Turn: <span id="current-player-name">Player 1</span></h2>
+            <main class="game-main">
+                <!-- Roll Phase - 3 Column Layout -->
+                <div id="roll-phase" class="phase-content roll-phase-layout">
+                    <!-- Left Column: Cards -->
+                    <div class="roll-column roll-column-left">
+                        <div id="card-hand-section" class="card-hand-section">
+                            <h3>Your Cards <span id="hand-count">(0)</span></h3>
+                            <div id="card-hand"></div>
+                        </div>
                     </div>
 
-                    <!-- Roll Phase -->
-                    <div id="roll-phase" class="phase-content">
+                    <!-- Center Column: Dice & Buttons -->
+                    <div class="roll-column roll-column-center">
+                        <div class="player-resources">
+                            <span class="resource">Fuel: <span id="player-fuel">0</span></span>
+                            <span class="resource">Gold: <span id="player-gold-display">0</span></span>
+                        </div>
+                        <div class="dice-area">
+                            <h3>Roll Your Dice</h3>
+                            <div id="dice-container"></div>
+                            <div id="fuel-bonus" class="hidden">
+                                Fuel Bonus: +<span id="fuel-bonus-amount">0</span>
+                            </div>
+                            <div id="roll-total" class="hidden">
+                                Total: <span id="total-miles">0</span> miles
+                            </div>
+                            <div id="reroll-info" class="hidden">
+                                Rerolls: <span id="rerolls-remaining">0</span> (click dice)
+                            </div>
+                            <div class="dice-buttons">
+                                <button id="roll-dice-btn" class="btn btn-primary">Roll Dice</button>
+                                <button id="continue-to-station" class="btn btn-secondary hidden">Continue to Station</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Train -->
+                    <div class="roll-column roll-column-right">
                         <div class="train-display">
                             <h3>Your Train</h3>
                             <div id="train-cars-display"></div>
                         </div>
-                        <div class="dice-area">
-                            <h3>Your Dice</h3>
-                            <div id="dice-container"></div>
-                            <div id="roll-total" class="hidden">
-                                Total: <span id="total-miles">0</span> miles
-                            </div>
-                            <button id="roll-dice-btn" class="btn btn-primary">Roll Dice</button>
-                            <button id="continue-to-station" class="btn btn-secondary hidden">Continue to Station</button>
-                        </div>
                     </div>
+                </div>
 
-                    <!-- Station Phase -->
-                    <div id="station-phase" class="phase-content hidden">
-                        <div class="station-display">
-                            <h3>Station Arrived!</h3>
-                            <div id="station-earnings">
-                                <p>Your train cars earned you:</p>
-                                <div id="earnings-breakdown"></div>
-                                <div id="total-earnings" class="gold-display">
-                                    +<span id="gold-earned">0</span> Gold
-                                </div>
+                <!-- Station Phase -->
+                <div id="station-phase" class="phase-content hidden">
+                    <div class="station-display">
+                        <h3>Station Arrived!</h3>
+                        <div id="station-earnings">
+                            <p>Your train cars earned you:</p>
+                            <div id="earnings-breakdown"></div>
+                            <div id="total-earnings" class="gold-display">
+                                +<span id="gold-earned">0</span> Gold
                             </div>
-                            <button id="continue-to-shop" class="btn btn-primary">Continue to Shop</button>
+                            <div id="fuel-gained" class="fuel-display hidden">
+                                +<span id="fuel-earned">0</span> Fuel
+                            </div>
                         </div>
+                        <button id="continue-to-shop" class="btn btn-primary">Continue to Shop</button>
                     </div>
+                </div>
 
-                    <!-- Shop Phase -->
-                    <div id="shop-phase" class="phase-content hidden">
-                        <div class="shop-display">
-                            <h3>Train Depot</h3>
-                            <p class="shop-instructions">Purchase 1 train car OR 1 enhancement card (or skip)</p>
-                            <div class="shop-gold">
-                                Your Gold: <span id="shop-player-gold">0</span>
-                            </div>
-
-                            <div class="shop-sections">
-                                <div class="shop-section">
-                                    <h4>Train Cars</h4>
-                                    <div id="train-car-shop"></div>
-                                </div>
-                                <div class="shop-section">
-                                    <h4>Enhancement Cards</h4>
-                                    <div id="enhancement-shop"></div>
-                                </div>
-                            </div>
-
-                            <button id="skip-shop" class="btn btn-secondary">Skip Purchase</button>
+                <!-- Shop Phase -->
+                <div id="shop-phase" class="phase-content hidden">
+                    <div class="shop-display">
+                        <h3>Train Depot</h3>
+                        <p class="shop-instructions">Permanent cards activate immediately. One-time cards go to your hand.</p>
+                        <div class="shop-gold">
+                            Your Gold: <span id="shop-player-gold">0</span>
                         </div>
+
+                        <div class="shop-sections">
+                            <div class="shop-section">
+                                <h4>Train Cars</h4>
+                                <div id="train-car-shop"></div>
+                            </div>
+                            <div class="shop-section">
+                                <h4>Enhancement Cards</h4>
+                                <div id="enhancement-shop"></div>
+                            </div>
+                        </div>
+
+                        <button id="skip-shop" class="btn btn-primary">End Turn</button>
                     </div>
-                </section>
+                </div>
             </main>
+
+            <!-- Player Panels (Bottom) -->
+            <div class="players-panel-bottom">
+                <div id="players-container"></div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div class="bottom-controls">
+                <button id="back-to-menu" class="btn btn-secondary">Back to Main Menu</button>
+                <div class="sound-controls">
+                    <button id="sound-toggle" class="sound-btn" title="Toggle Sound">
+                        <span class="sound-icon">&#x1F50A;</span>
+                    </button>
+                    <input type="range" id="volume-slider" min="0" max="100" value="50" class="volume-slider">
+                </div>
+            </div>
         </div>
 
         <!-- End Screen -->

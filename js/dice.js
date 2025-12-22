@@ -32,8 +32,12 @@ export function rollDice(diceList) {
 }
 
 // Apply modifiers from enhancement cards to dice results
-export function applyModifiers(diceResults, enhancementCards, trainCars) {
+// fuel parameter adds a flat bonus to total distance
+export function applyModifiers(diceResults, enhancementCards, trainCars, fuel = 0) {
     const modifiedResults = diceResults.map(die => ({ ...die }));
+
+    // Store fuel bonus for display purposes (applied in calculateTotal)
+    modifiedResults.fuelBonus = fuel;
 
     for (const card of enhancementCards) {
         const effect = card.effect;
@@ -105,9 +109,11 @@ export function applyModifiers(diceResults, enhancementCards, trainCars) {
     return modifiedResults;
 }
 
-// Calculate total distance from dice results
+// Calculate total distance from dice results (includes fuel bonus)
 export function calculateTotal(diceResults) {
-    return diceResults.reduce((sum, die) => sum + die.finalValue, 0);
+    const diceTotal = diceResults.reduce((sum, die) => sum + die.finalValue, 0);
+    const fuelBonus = diceResults.fuelBonus || 0;
+    return diceTotal + fuelBonus;
 }
 
 // Get dice list from train cars

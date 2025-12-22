@@ -16,7 +16,7 @@ This file contains project context and decisions for the Dice Train game to help
 ### Round Structure (3 Phases per Player)
 1. **Roll Phase**: Roll all dice from train cars, move forward by total miles
 2. **Station Phase**: Automatically reach a station, gain gold based on train cars
-3. **Shop Phase**: Spend gold on ONE purchase (train car OR enhancement card) or skip
+3. **Shop Phase**: Spend gold on MULTIPLE purchases (train cars AND/OR enhancement cards), then end turn
 
 ### Win Condition
 - Game ends after fixed number of rounds
@@ -46,13 +46,17 @@ This file contains project context and decisions for the Dice Train game to help
 
 ## Enhancement Cards
 
-12 cards in the deck with effects like:
-- Die bonuses by car type (+1 to all Coal/Passenger/Freight dice)
-- Station gold bonuses (+2 gold per station, +1 per car type)
-- Dice manipulation (reroll, minimum roll of 2, +2 to highest die)
-- One-time bonuses (double gold, +3 distance)
+20 cards in the deck with effects like:
+- Die bonuses by car type (+1/+2 to all Coal/Passenger/Freight dice)
+- Station gold bonuses (+2/+3 gold per station, +1/+2 per car type)
+- Per-car bonuses (+1 gold per train car owned - Railroad Tycoon)
+- Dice manipulation (reroll 1-2 dice, minimum roll of 2 or 3, +2 to highest die)
+- One-time bonuses (double gold, +3/+5 distance)
 
-Cards are drawn 3 at a time; when one is purchased, a new one is drawn.
+**Shop Card Mechanics:**
+- 3 cards are shown at each shop phase (freshly shuffled each time)
+- Multiple cards can be purchased per turn (if you have enough gold)
+- Unpurchased cards are shuffled back into the deck for next station
 
 ## File Structure
 
@@ -60,7 +64,7 @@ Cards are drawn 3 at a time; when one is purchased, a new one is drawn.
 DiceTrain/
 ├── index.html          # Main game page with all screens
 ├── css/
-│   └── style.css       # Dark theme, responsive layout
+│   └── style.css       # Late 1800s railroad theme (wood, brass, parchment)
 └── js/
     ├── main.js         # Entry point, event handlers, game flow
     ├── game.js         # Game state machine (PHASES, GAME_STATES)
