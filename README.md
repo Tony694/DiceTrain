@@ -1,6 +1,6 @@
 # Dice Train
 
-A browser-based board game where players build trains, roll dice, and race to travel the farthest distance.
+A browser-based board game where players build trains, roll dice, and race to travel the farthest distance. It's cool.
 
 ## How to Play
 
