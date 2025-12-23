@@ -71,11 +71,23 @@ export class Game {
         this.deck = createDeck();
         this.availableCars = getPurchasableCars();
 
-        // Start drafting phase
-        this.gameState = GAME_STATES.DRAFTING;
-        this.phase = PHASES.DRAFT;
+        // Give each player 2 random cards from the deck
+        this.players.forEach(player => {
+            const cards = drawCards(this.deck, 2);
+            cards.forEach(card => player.addCardToHand(card));
+        });
+
+        // Shuffle remaining deck and draw 3 cards for shop
+        this.deck = shuffleDeck(this.deck);
+        this.availableCards = drawCards(this.deck, 3);
+
+        // Start playing phase directly (skip draft)
+        this.gameState = GAME_STATES.PLAYING;
+        this.phase = PHASES.ROLL;
         this.currentPlayerIndex = 0;
-        this.startDraftForCurrentPlayer();
+
+        // Reset turn state for first player
+        this.getCurrentPlayer().resetTurnState();
 
         return this;
     }
@@ -251,6 +263,10 @@ export class Game {
         }
 
         this.phase = PHASES.ROLL;
+
+        // Reset turn state for new player
+        this.getCurrentPlayer().resetTurnState();
+
         return { gameEnded: false };
     }
 

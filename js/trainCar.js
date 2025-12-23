@@ -1,207 +1,269 @@
 // Train Car definitions for Dice Train
 
 export const TRAIN_CARS = {
-    // Starting cars (given to all players)
+    // ==========================================
+    // STARTING CARS (3 cars, each defines a playstyle)
+    // ==========================================
+
+    // Fuel Strategy - dice manipulation through fuel
     coalTender: {
         id: 'coalTender',
         name: 'Coal Tender',
-        description: 'Provides fuel for your journey. Each fuel adds +1 distance, or spend 1 to reroll.',
+        description: 'Fuel engine. Start with 3 fuel. Gain +1 fuel per station.',
         die: 'd6',
         stationGold: 0,
         cost: 0,
         isStarting: true,
         type: 'coal',
-        startingFuel: 2,
-        fuelPerStation: 0
+        startingFuel: 3,
+        fuelPerStation: 1
     },
+
+    // Income Strategy - gold generation
     passengerCar: {
         id: 'passengerCar',
         name: 'Passenger Car',
-        description: 'Carries travelers who pay for their journey.',
+        description: 'Carry travelers. Earn 3 gold at each station.',
         die: 'd6',
-        stationGold: 2,
+        stationGold: 3,
         cost: 0,
         isStarting: true,
         type: 'passenger'
     },
+
+    // Speed Strategy - consistent distance bonus
     freightCar: {
         id: 'freightCar',
         name: 'Freight Car',
-        description: 'Hauls valuable cargo. Earns half your roll in gold (rounded up).',
+        description: 'Heavy hauler. This die gets +1 to its roll.',
         die: 'd6',
         stationGold: 0,
         cost: 0,
         isStarting: true,
         type: 'freight',
-        special: 'halfRollGold'
+        special: 'selfBonus',
+        selfBonus: 1
     },
 
-    // Purchasable cars (all grant at least d6)
-    luxurySleeper: {
-        id: 'luxurySleeper',
-        name: 'Luxury Sleeper',
-        description: 'Premium accommodations for wealthy travelers.',
+    // ==========================================
+    // ROW 1 - Entry Level (Unlocked at 0 mi)
+    // ==========================================
+
+    boxcar: {
+        id: 'boxcar',
+        name: 'Boxcar',
+        description: 'Reliable freight hauler. This die gets +1 to its roll.',
         die: 'd6',
-        stationGold: 4,
-        cost: 10,
-        isStarting: false,
-        type: 'passenger'
-    },
-    cargoHold: {
-        id: 'cargoHold',
-        name: 'Cargo Hold',
-        description: 'Massive storage for heavy freight. Fast but no gold.',
-        die: 'd10',
         stationGold: 0,
-        cost: 8,
+        cost: 4,
         isStarting: false,
-        type: 'freight'
+        type: 'freight',
+        unlockDistance: 0,
+        special: 'selfBonus',
+        selfBonus: 1
     },
+
+    mailCar: {
+        id: 'mailCar',
+        name: 'Mail Car',
+        description: 'Steady postal income. +1 gold at each station.',
+        die: 'd6',
+        stationGold: 1,
+        cost: 5,
+        isStarting: false,
+        type: 'passenger',
+        unlockDistance: 0
+    },
+
+    waterTower: {
+        id: 'waterTower',
+        name: 'Water Tower',
+        description: 'Steam supply car. +2 fuel at each station.',
+        die: 'd4',
+        stationGold: 0,
+        cost: 5,
+        isStarting: false,
+        type: 'coal',
+        unlockDistance: 0,
+        fuelPerStation: 2
+    },
+
+    caboose: {
+        id: 'caboose',
+        name: 'Caboose',
+        description: 'Tail car provides stability. +1 to your lowest die roll.',
+        die: 'd6',
+        stationGold: 0,
+        cost: 6,
+        isStarting: false,
+        type: 'special',
+        unlockDistance: 0,
+        special: 'lowestDieBonus'
+    },
+
+    // ==========================================
+    // ROW 2 - Mid Tier (Unlocked at 30 mi)
+    // ==========================================
+
+    stockCar: {
+        id: 'stockCar',
+        name: 'Stock Car',
+        description: 'Livestock transport. Larger die for more distance.',
+        die: 'd8',
+        stationGold: 0,
+        cost: 7,
+        isStarting: false,
+        type: 'freight',
+        unlockDistance: 30
+    },
+
+    coalHopper: {
+        id: 'coalHopper',
+        name: 'Coal Hopper',
+        description: 'Efficient coal storage. +1 fuel/station. First reroll each turn is free.',
+        die: 'd6',
+        stationGold: 0,
+        cost: 7,
+        isStarting: false,
+        type: 'coal',
+        unlockDistance: 30,
+        fuelPerStation: 1,
+        special: 'freeReroll'
+    },
+
     diningCar: {
         id: 'diningCar',
         name: 'Dining Car',
-        description: 'Fine dining on rails. Passengers pay well to eat.',
+        description: 'Fine dining attracts wealthy travelers. +2 gold at stations.',
         die: 'd6',
-        stationGold: 3,
+        stationGold: 2,
+        cost: 8,
+        isStarting: false,
+        type: 'passenger',
+        unlockDistance: 30
+    },
+
+    observationDeck: {
+        id: 'observationDeck',
+        name: 'Observation Deck',
+        description: 'Scenic views attract tourists. +1 gold per other Passenger car at stations.',
+        die: 'd6',
+        stationGold: 0,
+        cost: 8,
+        isStarting: false,
+        type: 'passenger',
+        unlockDistance: 30,
+        special: 'passengerSynergy'
+    },
+
+    // ==========================================
+    // ROW 3 - Strong Tier (Unlocked at 60 mi)
+    // ==========================================
+
+    gondolaCar: {
+        id: 'gondolaCar',
+        name: 'Gondola Car',
+        description: 'Open-top bulk hauler. This die gets +1 to its roll.',
+        die: 'd8',
+        stationGold: 0,
         cost: 9,
         isStarting: false,
-        type: 'passenger'
+        type: 'freight',
+        unlockDistance: 60,
+        special: 'selfBonus',
+        selfBonus: 1
     },
+
+    tankCar: {
+        id: 'tankCar',
+        name: 'Tank Car',
+        description: 'Massive fuel reserves. +3 fuel at each station.',
+        die: 'd6',
+        stationGold: 0,
+        cost: 10,
+        isStarting: false,
+        type: 'coal',
+        unlockDistance: 60,
+        fuelPerStation: 3
+    },
+
+    cargoHold: {
+        id: 'cargoHold',
+        name: 'Cargo Hold',
+        description: 'Massive storage capacity. Roll d10 for maximum speed.',
+        die: 'd10',
+        stationGold: 0,
+        cost: 10,
+        isStarting: false,
+        type: 'freight',
+        unlockDistance: 60
+    },
+
+    luxurySleeper: {
+        id: 'luxurySleeper',
+        name: 'Luxury Sleeper',
+        description: 'Premium accommodations. +4 gold at each station.',
+        die: 'd6',
+        stationGold: 4,
+        cost: 11,
+        isStarting: false,
+        type: 'passenger',
+        unlockDistance: 60
+    },
+
+    // ==========================================
+    // ROW 4 - Elite Tier (Unlocked at 100 mi)
+    // ==========================================
+
+    steamBoiler: {
+        id: 'steamBoiler',
+        name: 'Steam Boiler',
+        description: 'High-pressure power. Spend 2 fuel to set any die to its maximum (once/turn).',
+        die: 'd6',
+        stationGold: 0,
+        cost: 12,
+        isStarting: false,
+        type: 'coal',
+        unlockDistance: 100,
+        special: 'maxDie',
+        fuelPerStation: 1
+    },
+
+    firstClassCar: {
+        id: 'firstClassCar',
+        name: 'First Class Car',
+        description: 'Railroad tycoon status. +1 gold per train car you own.',
+        die: 'd6',
+        stationGold: 0,
+        cost: 13,
+        isStarting: false,
+        type: 'passenger',
+        unlockDistance: 100,
+        special: 'perCarGold'
+    },
+
     expressEngine: {
         id: 'expressEngine',
         name: 'Express Engine',
-        description: 'An extra engine for maximum speed.',
+        description: 'Pure power. Roll the mighty d12.',
         die: 'd12',
         stationGold: 0,
         cost: 14,
         isStarting: false,
-        type: 'coal'
-    },
-    mailCar: {
-        id: 'mailCar',
-        name: 'Mail Car',
-        description: 'Delivers letters and small packages for steady income.',
-        die: 'd6',
-        stationGold: 2,
-        cost: 6,
-        isStarting: false,
-        type: 'freight'
-    },
-    observationDeck: {
-        id: 'observationDeck',
-        name: 'Observation Deck',
-        description: 'Scenic views attract paying tourists.',
-        die: 'd6',
-        stationGold: 2,
-        cost: 7,
-        isStarting: false,
-        type: 'passenger'
-    },
-    caboose: {
-        id: 'caboose',
-        name: 'Caboose',
-        description: 'The classic tail car. Adds +1 to your lowest die roll.',
-        die: 'd6',
-        stationGold: 1,
-        cost: 5,
-        isStarting: false,
-        type: 'special',
-        special: 'lowestDieBonus'
-    },
-    tankCar: {
-        id: 'tankCar',
-        name: 'Tank Car',
-        description: 'Transports fuel. Adds +2 fuel at each station.',
-        die: 'd6',
-        stationGold: 0,
-        cost: 8,
-        isStarting: false,
         type: 'coal',
-        fuelPerStation: 2
+        unlockDistance: 100
     },
-    stockCar: {
-        id: 'stockCar',
-        name: 'Stock Car',
-        description: 'Transports livestock. Earns half your roll in gold.',
-        die: 'd8',
-        stationGold: 0,
-        cost: 11,
-        isStarting: false,
-        type: 'freight',
-        special: 'halfRollGold'
-    },
-    coalHopper: {
-        id: 'coalHopper',
-        name: 'Coal Hopper',
-        description: 'Extra coal storage. Adds +1 fuel at each station.',
-        die: 'd6',
-        stationGold: 0,
-        cost: 6,
-        isStarting: false,
-        type: 'coal',
-        fuelPerStation: 1
-    },
-    firstClassCar: {
-        id: 'firstClassCar',
-        name: 'First Class Car',
-        description: 'The finest accommodations on the rails.',
-        die: 'd6',
-        stationGold: 5,
-        cost: 12,
-        isStarting: false,
-        type: 'passenger'
-    },
-    boxcar: {
-        id: 'boxcar',
-        name: 'Boxcar',
-        description: 'Basic enclosed freight carrier.',
-        die: 'd6',
-        stationGold: 1,
-        cost: 4,
-        isStarting: false,
-        type: 'freight'
-    },
-    locomotiveExtra: {
-        id: 'locomotiveExtra',
-        name: 'Locomotive',
-        description: 'A powerful second engine for your train.',
-        die: 'd10',
-        stationGold: 0,
-        cost: 10,
-        isStarting: false,
-        type: 'coal'
-    },
+
     pullmanCar: {
         id: 'pullmanCar',
         name: 'Pullman Car',
-        description: 'The famous luxury sleeper. Premium comfort.',
+        description: 'The famous luxury sleeper. +6 gold at each station.',
         die: 'd6',
         stationGold: 6,
         cost: 15,
         isStarting: false,
-        type: 'passenger'
-    },
-    waterTower: {
-        id: 'waterTower',
-        name: 'Water Tower',
-        description: 'Provides water for steam. +1 fuel per station.',
-        die: 'd6',
-        stationGold: 0,
-        cost: 5,
-        isStarting: false,
-        type: 'coal',
-        fuelPerStation: 1
-    },
-    gondolaCar: {
-        id: 'gondolaCar',
-        name: 'Gondola Car',
-        description: 'Open-top car for bulk materials. Earns half roll gold.',
-        die: 'd6',
-        stationGold: 0,
-        cost: 7,
-        isStarting: false,
-        type: 'freight',
-        special: 'halfRollGold'
+        type: 'passenger',
+        unlockDistance: 100
     }
 };
 
@@ -225,3 +287,18 @@ export function getPurchasableCars() {
 export function getCarById(id) {
     return TRAIN_CARS[id] ? { ...TRAIN_CARS[id] } : null;
 }
+
+// Get cars filtered by unlock distance
+export function getUnlockedCars(playerDistance) {
+    return Object.values(TRAIN_CARS)
+        .filter(car => !car.isStarting && (car.unlockDistance || 0) <= playerDistance)
+        .map(car => ({ ...car }));
+}
+
+// Unlock distance tiers for UI display
+export const UNLOCK_TIERS = [
+    { distance: 0, label: 'Available Now' },
+    { distance: 30, label: 'Unlocks at 30 mi' },
+    { distance: 60, label: 'Unlocks at 60 mi' },
+    { distance: 100, label: 'Unlocks at 100 mi' }
+];

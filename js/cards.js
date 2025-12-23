@@ -1,223 +1,194 @@
 // Enhancement Card definitions for Dice Train
+// All cards are one-time use effects that can be played anytime during the player's turn
 
-// Persistent cards auto-play when acquired, one-time cards go to hand
 export const ENHANCEMENT_CARDS = [
+    // ==========================================
+    // FUEL STRATEGY CARDS (5)
+    // ==========================================
     {
-        id: 'coalEfficiency',
-        name: 'Coal Efficiency',
-        description: '+1 to all Coal type dice',
+        id: 'emergencyCoal',
+        name: 'Emergency Coal',
+        description: 'Immediately gain 5 fuel.',
+        cost: 4,
+        persistent: false,
+        effect: {
+            type: 'gainFuel',
+            amount: 5
+        }
+    },
+    {
+        id: 'precisionEngineering',
+        name: 'Precision Engineering',
+        description: 'Set any one die to exactly 4 before rolling.',
+        cost: 5,
+        persistent: false,
+        effect: {
+            type: 'setDieValue',
+            value: 4
+        }
+    },
+    {
+        id: 'fuelSurge',
+        name: 'Fuel Surge',
+        description: 'This turn, each fuel spent adds +2 distance instead of +1.',
         cost: 6,
-        persistent: true,
+        persistent: false,
         effect: {
-            type: 'dieBonus',
-            carType: 'coal',
-            bonus: 1
+            type: 'doubleFuelBonus'
         }
     },
     {
-        id: 'passengerComfort',
-        name: 'Passenger Comfort',
-        description: '+1 to all Passenger type dice',
-        cost: 6,
-        persistent: true,
-        effect: {
-            type: 'dieBonus',
-            carType: 'passenger',
-            bonus: 1
-        }
-    },
-    {
-        id: 'freightOptimization',
-        name: 'Freight Optimization',
-        description: '+1 to all Freight type dice',
-        cost: 6,
-        persistent: true,
-        effect: {
-            type: 'dieBonus',
-            carType: 'freight',
-            bonus: 1
-        }
-    },
-    {
-        id: 'stationMaster',
-        name: 'Station Master',
-        description: '+2 gold at every station',
-        cost: 8,
-        persistent: true,
-        effect: {
-            type: 'stationBonus',
-            bonus: 2
-        }
-    },
-    {
-        id: 'efficientEngine',
-        name: 'Efficient Engine',
-        description: '+1 to all dice rolls',
-        cost: 15,
-        persistent: true,
-        effect: {
-            type: 'allDieBonus',
-            bonus: 1
-        }
-    },
-    {
-        id: 'luckyCharm',
-        name: 'Lucky Charm',
-        description: 'Re-roll one die per turn',
+        id: 'masterMechanic',
+        name: 'Master Mechanic',
+        description: 'Reroll ALL your dice once. Keep the new results.',
         cost: 7,
-        persistent: true,
+        persistent: false,
         effect: {
-            type: 'reroll',
-            count: 1
+            type: 'rerollAll'
         }
     },
     {
-        id: 'expressDelivery',
-        name: 'Express Delivery',
-        description: '+2 to your highest die roll',
-        cost: 9,
-        persistent: true,
+        id: 'overclockEngine',
+        name: 'Overclock Engine',
+        description: 'Double your total fuel bonus this turn (after spending fuel).',
+        cost: 8,
+        persistent: false,
         effect: {
-            type: 'highestDieBonus',
-            bonus: 2
+            type: 'doubleFuelTotal'
+        }
+    },
+
+    // ==========================================
+    // INCOME STRATEGY CARDS (5)
+    // ==========================================
+    {
+        id: 'railroadSubsidy',
+        name: 'Railroad Subsidy',
+        description: 'Your next train car purchase costs 5 gold less.',
+        cost: 3,
+        persistent: false,
+        effect: {
+            type: 'discount',
+            amount: 5
+        }
+    },
+    {
+        id: 'investorMeeting',
+        name: 'Investor Meeting',
+        description: 'Immediately gain 8 gold.',
+        cost: 4,
+        persistent: false,
+        effect: {
+            type: 'gainGold',
+            amount: 8
         }
     },
     {
         id: 'goldRush',
         name: 'Gold Rush',
-        description: 'Double gold from your next station (one-time)',
+        description: 'Double gold earned at your next station.',
         cost: 5,
         persistent: false,
         effect: {
-            type: 'doubleGold',
-            uses: 1
+            type: 'doubleGold'
         }
     },
     {
-        id: 'steadyHand',
-        name: 'Steady Hand',
-        description: 'Minimum die roll of 2 on all dice',
-        cost: 10,
-        persistent: true,
-        effect: {
-            type: 'minimumRoll',
-            minimum: 2
-        }
-    },
-    {
-        id: 'cargoMaster',
-        name: 'Cargo Master',
-        description: '+1 gold per Freight car at stations',
-        cost: 7,
-        persistent: true,
-        effect: {
-            type: 'carTypeGoldBonus',
-            carType: 'freight',
-            bonus: 1
-        }
-    },
-    {
-        id: 'vipService',
-        name: 'VIP Service',
-        description: '+1 gold per Passenger car at stations',
-        cost: 7,
-        persistent: true,
-        effect: {
-            type: 'carTypeGoldBonus',
-            carType: 'passenger',
-            bonus: 1
-        }
-    },
-    {
-        id: 'turboBoost',
-        name: 'Turbo Boost',
-        description: '+3 to total distance once per game',
-        cost: 4,
+        id: 'premiereTickets',
+        name: 'Premiere Tickets',
+        description: 'Gain +2 gold for each Passenger car you own (this station).',
+        cost: 6,
         persistent: false,
         effect: {
-            type: 'distanceBonus',
-            bonus: 3,
-            uses: 1
-        }
-    },
-    {
-        id: 'ironHorse',
-        name: 'Iron Horse',
-        description: '+2 to all Coal type dice',
-        cost: 11,
-        persistent: true,
-        effect: {
-            type: 'dieBonus',
-            carType: 'coal',
+            type: 'passengerBonus',
             bonus: 2
         }
     },
     {
-        id: 'conductorsBell',
-        name: "Conductor's Bell",
-        description: '+3 gold at every station',
-        cost: 12,
-        persistent: true,
+        id: 'bankersContract',
+        name: "Banker's Contract",
+        description: 'Gain gold equal to your current gold (max 15).',
+        cost: 8,
+        persistent: false,
         effect: {
-            type: 'stationBonus',
-            bonus: 3
+            type: 'matchGold',
+            max: 15
+        }
+    },
+
+    // ==========================================
+    // SPEED STRATEGY CARDS (5)
+    // ==========================================
+    {
+        id: 'turboBoost',
+        name: 'Turbo Boost',
+        description: 'Add +8 to your total distance this turn.',
+        cost: 5,
+        persistent: false,
+        effect: {
+            type: 'distanceBonus',
+            bonus: 8
         }
     },
     {
-        id: 'railroadTycoon',
-        name: 'Railroad Tycoon',
-        description: '+1 gold per train car you own at stations',
-        cost: 14,
-        persistent: true,
+        id: 'tailwind',
+        name: 'Tailwind',
+        description: '+2 to every die this turn.',
+        cost: 6,
+        persistent: false,
         effect: {
-            type: 'perCarGoldBonus',
-            bonus: 1
+            type: 'allDieBonus',
+            bonus: 2
         }
     },
     {
-        id: 'wildWestExpress',
-        name: 'Wild West Express',
-        description: 'Re-roll up to two dice per turn',
-        cost: 12,
-        persistent: true,
+        id: 'expressRoute',
+        name: 'Express Route',
+        description: 'Roll twice this turn, keep the higher total.',
+        cost: 7,
+        persistent: false,
         effect: {
-            type: 'reroll',
-            count: 2
+            type: 'doubleRoll'
         }
     },
     {
         id: 'goldenSpike',
         name: 'Golden Spike',
-        description: '+5 to total distance once per game',
-        cost: 6,
+        description: 'Add +12 to your total distance this turn.',
+        cost: 8,
         persistent: false,
         effect: {
             type: 'distanceBonus',
-            bonus: 5,
-            uses: 1
+            bonus: 12
         }
     },
     {
-        id: 'frontierSpirit',
-        name: 'Frontier Spirit',
-        description: 'Minimum die roll of 3 on all dice',
-        cost: 16,
-        persistent: true,
+        id: 'perfectRun',
+        name: 'Perfect Run',
+        description: 'Set all dice to their maximum values this turn.',
+        cost: 12,
+        persistent: false,
         effect: {
-            type: 'minimumRoll',
-            minimum: 3
+            type: 'maxAllDice'
         }
     },
+
+    // ==========================================
+    // UTILITY CARD (1)
+    // ==========================================
     {
-        id: 'coalBarons',
-        name: "Coal Baron's Deal",
-        description: '+2 gold per Coal car at stations',
-        cost: 10,
-        persistent: true,
+        id: 'wildCard',
+        name: 'Wild Card',
+        description: 'Choose one: +5 fuel, +10 gold, or +10 distance.',
+        cost: 6,
+        persistent: false,
         effect: {
-            type: 'carTypeGoldBonus',
-            carType: 'coal',
-            bonus: 2
+            type: 'choice',
+            options: [
+                { label: '+5 Fuel', effectType: 'gainFuel', amount: 5 },
+                { label: '+10 Gold', effectType: 'gainGold', amount: 10 },
+                { label: '+10 Distance', effectType: 'distanceBonus', bonus: 10 }
+            ]
         }
     }
 ];

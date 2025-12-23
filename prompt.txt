@@ -1,0 +1,10 @@
+Can you go ahead and make me a plan to solve the following:
+
+I'm having some issues with the design of the game that I'd like help with. You are free to completely re-balance systems that are in
+  place but try not to touch core functionality of the games phases. Here's what I would like:
+  * I would like the starting 3 cars to offer different playstyles that the player can lean into. These styles are mostly represented by
+  the starting cars already but need slight tuning. They include: Fuel - building fuel counters that allow dice manipulation through
+  re-rolling dice OR changing dice values, Income - gaining gold when reaching stations to be able to purchase more cars faster, and
+  additional or stronger dice to traverse more miles through big rolls.
+  * I'd like the design of train cars to mostly focus on the three strategies listed above (fuel/income/large rolls) and grant permanent effects. Additionally, Enhancement cards should only offer one-time effects that are much more powerful and match some already designed cards such as "gain 2x income at the next station" and be more interactive overall.
+  * One other idea I've been playing with is making the 4x4 grid of train cars unlock as you gain miles. An example of this would be that the first row is purchasable immediately, the 2nd row unlocks when you have gone 30 miles, the 3rd at 60 miles, and the last at 100 miles. If you can work this idea into balancing the cars with the strategies above that would be great.

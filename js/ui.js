@@ -551,7 +551,7 @@ export function renderStationEarnings(earnings, fuelGained) {
 // Render shop
 export function renderShop(player, cars, cards, onPurchaseCar, onPurchaseCard) {
     elements.shopPlayerGold.textContent = player.gold;
-    renderTrainCarShop(elements.trainCarShop, cars, player.gold, onPurchaseCar);
+    renderTrainCarShop(elements.trainCarShop, cars, player.gold, player.totalDistance, onPurchaseCar);
     renderEnhancementShop(elements.enhancementShop, cards, player.gold, onPurchaseCard);
 }
 

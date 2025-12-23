@@ -1,7 +1,7 @@
 // Player class for Dice Train
 
 import { getStartingCars } from './trainCar.js';
-import { rollDice, applyModifiers, calculateTotal, getDiceFromCars } from './dice.js';
+import { rollDice, applyModifiers, calculateTotal, getDiceFromCars, DIE_TYPES } from './dice.js';
 
 export class Player {
     constructor(id, name, isAI = false, isLocal = true) {
@@ -14,11 +14,15 @@ export class Player {
         this.fuel = 0; // Fuel is tracked on player, initialized from Coal Tender
         this.totalDistance = 0;
         this.trainCars = getStartingCars();
-        this.cardHand = []; // Cards in hand (purchased but not played)
-        this.activeCards = []; // Cards that have been played and are active
+        this.cardHand = []; // Cards in hand (all cards are now one-time use)
+        this.activeCards = []; // Cards that have been played this turn
         this.lastRollResults = [];
         this.fuelRerollsRemaining = 0;
-        this.cardRerollsRemaining = 0;
+
+        // Turn state tracking
+        this.usedFreeRerollThisTurn = false;
+        this.usedMaxDieThisTurn = false;
+        this.hasDiscount = 0; // Discount amount for next car purchase
 
         // Initialize fuel from starting coal tender
         this.initializeFuel();
@@ -33,31 +37,41 @@ export class Player {
         }
     }
 
+    // Reset turn state at start of new turn
+    resetTurnState() {
+        this.usedFreeRerollThisTurn = false;
+        this.usedMaxDieThisTurn = false;
+        this.activeCards = []; // Clear active cards from previous turn
+    }
+
     // Roll all dice from train cars
     roll() {
         const diceList = getDiceFromCars(this.trainCars);
         const results = rollDice(diceList);
         this.lastRollResults = applyModifiers(results, this.activeCards, this.trainCars, this.fuel);
 
-        // Set up rerolls: fuel-based + card-based
-        this.fuelRerollsRemaining = this.fuel; // Can spend any fuel for rerolls
-        this.cardRerollsRemaining = this.activeCards
-            .filter(card => card.effect.type === 'reroll')
-            .reduce((sum, card) => sum + card.effect.count, 0);
+        // Set up fuel-based rerolls
+        this.fuelRerollsRemaining = this.fuel;
 
         return this.lastRollResults;
     }
 
-    // Reroll a specific die (prioritize card rerolls, then fuel)
+    // Check if player has a free reroll available (Coal Hopper)
+    hasFreeReroll() {
+        return !this.usedFreeRerollThisTurn &&
+               this.trainCars.some(car => car.special === 'freeReroll');
+    }
+
+    // Reroll a specific die
     rerollDie(dieIndex) {
         if (dieIndex >= this.lastRollResults.length) {
             return false;
         }
 
-        // Try card rerolls first (free), then fuel
+        // Try free reroll first (Coal Hopper), then fuel
         let usedFuel = false;
-        if (this.cardRerollsRemaining > 0) {
-            this.cardRerollsRemaining--;
+        if (this.hasFreeReroll()) {
+            this.usedFreeRerollThisTurn = true;
         } else if (this.fuelRerollsRemaining > 0 && this.fuel > 0) {
             this.fuel--;
             this.fuelRerollsRemaining--;
@@ -83,12 +97,44 @@ export class Player {
 
     // Check if player can reroll
     canReroll() {
-        return this.cardRerollsRemaining > 0 || (this.fuelRerollsRemaining > 0 && this.fuel > 0);
+        return this.hasFreeReroll() || (this.fuelRerollsRemaining > 0 && this.fuel > 0);
     }
 
     // Get total rerolls remaining
     getTotalRerollsRemaining() {
-        return this.cardRerollsRemaining + Math.min(this.fuelRerollsRemaining, this.fuel);
+        const freeRerolls = this.hasFreeReroll() ? 1 : 0;
+        return freeRerolls + Math.min(this.fuelRerollsRemaining, this.fuel);
+    }
+
+    // Check if player can use maxDie ability (Steam Boiler)
+    canMaxDie() {
+        return !this.usedMaxDieThisTurn &&
+               this.fuel >= 2 &&
+               this.trainCars.some(car => car.special === 'maxDie');
+    }
+
+    // Use maxDie ability - spend 2 fuel to set any die to its maximum
+    useMaxDie(dieIndex) {
+        if (!this.canMaxDie() || dieIndex >= this.lastRollResults.length) {
+            return false;
+        }
+
+        this.fuel -= 2;
+        this.usedMaxDieThisTurn = true;
+
+        const die = this.lastRollResults[dieIndex];
+        const maxValue = DIE_TYPES[die.type];
+        die.baseValue = maxValue;
+
+        // Reapply modifiers
+        this.lastRollResults = applyModifiers(
+            this.lastRollResults.map(d => ({ ...d, bonus: 0, finalValue: 0 })),
+            this.activeCards,
+            this.trainCars,
+            this.fuel
+        );
+
+        return true;
     }
 
     // Get total distance from last roll
@@ -98,7 +144,15 @@ export class Player {
 
     // Move train and add to total distance
     move() {
-        const distance = this.getLastRollTotal();
+        let distance = this.getLastRollTotal();
+
+        // Add distance bonuses from active cards
+        for (const card of this.activeCards) {
+            if (card.effect.type === 'distanceBonus') {
+                distance += card.effect.bonus;
+            }
+        }
+
         this.totalDistance += distance;
         return distance;
     }
@@ -108,7 +162,7 @@ export class Player {
         let gold = 0;
         const breakdown = [];
 
-        // Base gold from each car
+        // Base gold from each car's stationGold
         for (const car of this.trainCars) {
             if (car.stationGold > 0) {
                 gold += car.stationGold;
@@ -119,64 +173,41 @@ export class Player {
             }
         }
 
-        // Half roll gold from freight cars with that special ability
-        for (let i = 0; i < this.trainCars.length; i++) {
-            const car = this.trainCars[i];
-            if (car.special === 'halfRollGold' && this.lastRollResults[i]) {
-                const rollValue = this.lastRollResults[i].finalValue;
-                const halfGold = Math.ceil(rollValue / 2);
-                gold += halfGold;
+        // Observation Deck - passengerSynergy: +1g per OTHER passenger car
+        const hasObservationDeck = this.trainCars.some(car => car.special === 'passengerSynergy');
+        if (hasObservationDeck) {
+            const otherPassengerCars = this.trainCars.filter(
+                car => car.type === 'passenger' && car.special !== 'passengerSynergy'
+            ).length;
+            if (otherPassengerCars > 0) {
+                gold += otherPassengerCars;
                 breakdown.push({
-                    source: `${car.name} (half of ${rollValue})`,
-                    amount: halfGold
+                    source: 'Observation Deck',
+                    amount: otherPassengerCars
                 });
             }
         }
 
-        // Apply active enhancement card bonuses
-        for (const card of this.activeCards) {
-            const effect = card.effect;
+        // First Class Car - perCarGold: +1g per car owned
+        const hasFirstClass = this.trainCars.some(car => car.special === 'perCarGold');
+        if (hasFirstClass) {
+            const bonus = this.trainCars.length;
+            gold += bonus;
+            breakdown.push({
+                source: 'First Class Car',
+                amount: bonus
+            });
+        }
 
-            if (effect.type === 'stationBonus') {
-                gold += effect.bonus;
-                breakdown.push({
-                    source: card.name,
-                    amount: effect.bonus
-                });
-            }
-
-            if (effect.type === 'carTypeGoldBonus') {
-                const matchingCars = this.trainCars.filter(car => car.type === effect.carType);
-                const bonus = matchingCars.length * effect.bonus;
-                if (bonus > 0) {
-                    gold += bonus;
-                    breakdown.push({
-                        source: card.name,
-                        amount: bonus
-                    });
-                }
-            }
-
-            if (effect.type === 'perCarGoldBonus') {
-                const bonus = this.trainCars.length * effect.bonus;
-                if (bonus > 0) {
-                    gold += bonus;
-                    breakdown.push({
-                        source: card.name,
-                        amount: bonus
-                    });
-                }
-            }
-
-            if (effect.type === 'doubleGold' && effect.uses > 0) {
-                const doubleAmount = gold;
-                gold += doubleAmount;
-                breakdown.push({
-                    source: card.name + ' (consumed)',
-                    amount: doubleAmount
-                });
-                effect.uses--;
-            }
+        // Double gold from active cards (Gold Rush)
+        const doubleGoldCard = this.activeCards.find(card => card.effect.type === 'doubleGold');
+        if (doubleGoldCard) {
+            const doubleAmount = gold;
+            gold += doubleAmount;
+            breakdown.push({
+                source: 'Gold Rush (2x)',
+                amount: doubleAmount
+            });
         }
 
         return { total: gold, breakdown };
@@ -194,59 +225,64 @@ export class Player {
         return fuelGained;
     }
 
-    // Gain gold at station
+    // Gain gold
     gainGold(amount) {
         this.gold += amount;
         return this.gold;
     }
 
-    // Purchase a train car
+    // Gain fuel
+    gainFuel(amount) {
+        this.fuel += amount;
+        return this.fuel;
+    }
+
+    // Purchase a train car (with discount support)
     purchaseTrainCar(car) {
-        if (this.gold < car.cost) {
+        const effectiveCost = Math.max(0, car.cost - this.hasDiscount);
+        if (this.gold < effectiveCost) {
             return false;
         }
-        this.gold -= car.cost;
+        this.gold -= effectiveCost;
+        this.hasDiscount = 0; // Reset discount after use
         this.trainCars.push({ ...car });
         return true;
     }
 
-    // Purchase an enhancement card (persistent cards auto-activate, others go to hand)
+    // Purchase an enhancement card (all cards go to hand now)
     purchaseCard(card) {
         if (this.gold < card.cost) {
             return false;
         }
         this.gold -= card.cost;
-        this.addCard({ ...card });
+        this.cardHand.push({ ...card });
         return true;
     }
 
-    // Add card - persistent cards auto-activate, others go to hand
-    addCard(card) {
-        if (card.persistent) {
-            this.activeCards.push(card);
-        } else {
-            this.cardHand.push(card);
-        }
-    }
-
-    // Add card directly to hand (for drafting) - respects persistent flag
+    // Add card directly to hand (for drafting/drawing)
     addCardToHand(card) {
-        this.addCard({ ...card });
+        this.cardHand.push({ ...card });
     }
 
-    // Play a card from hand (move to active)
+    // Play a card from hand (move to active for this turn)
     playCard(cardIndex) {
         if (cardIndex < 0 || cardIndex >= this.cardHand.length) {
-            return false;
+            return null;
         }
         const card = this.cardHand.splice(cardIndex, 1)[0];
         this.activeCards.push(card);
-        return true;
+        return card;
     }
 
     // Check if player can afford something
     canAfford(cost) {
         return this.gold >= cost;
+    }
+
+    // Check if player can afford a car (with discount)
+    canAffordCar(car) {
+        const effectiveCost = Math.max(0, car.cost - this.hasDiscount);
+        return this.gold >= effectiveCost;
     }
 
     // Get summary of player state

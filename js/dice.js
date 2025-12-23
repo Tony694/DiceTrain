@@ -86,6 +86,13 @@ export function applyModifiers(diceResults, enhancementCards, trainCars, fuel = 
         }
     }
 
+    // Apply selfBonus from cars (e.g., Freight Car, Boxcar, Gondola)
+    modifiedResults.forEach(die => {
+        if (die.selfBonus) {
+            die.bonus += die.selfBonus;
+        }
+    });
+
     // Apply caboose bonus (+1 to lowest die)
     const hasCaboose = trainCars.some(car => car.special === 'lowestDieBonus');
     if (hasCaboose && modifiedResults.length > 0) {
@@ -121,6 +128,7 @@ export function getDiceFromCars(trainCars) {
     return trainCars.map(car => ({
         type: car.die,
         carName: car.name,
-        carType: car.type
+        carType: car.type,
+        selfBonus: car.selfBonus || 0
     }));
 }

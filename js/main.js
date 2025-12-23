@@ -636,9 +636,7 @@ async function checkForAITurn() {
     const player = game.getCurrentPlayer();
 
     if (player && player.isAI && player.isLocal) {
-        if (game.gameState === GAME_STATES.DRAFTING) {
-            await executeAIDraft(player);
-        } else if (game.gameState === GAME_STATES.PLAYING) {
+        if (game.gameState === GAME_STATES.PLAYING) {
             await executeAITurn(player);
             // After AI turn, end their turn
             const result = game.endTurn();
@@ -655,13 +653,13 @@ async function checkForAITurn() {
 
 // Client state - tracks what the client knows (thin client model)
 let clientState = null;
-let clientCurrentScreen = 'draft';
+let clientCurrentScreen = 'game';
 let mapInitialized = false;
 
 // Start a multiplayer game (called when host starts or client receives game start)
 async function startMultiplayerGame(playerConfigs, roundCount) {
     mapInitialized = false;
-    clientCurrentScreen = 'draft';
+    clientCurrentScreen = 'game';
 
     if (isHost) {
         // Host runs the actual game
@@ -675,18 +673,7 @@ async function startMultiplayerGame(playerConfigs, roundCount) {
         // Update host UI when client actions are processed
         gameSync.onHostUpdate = () => {
             // Update display based on current game state
-            if (game.gameState === GAME_STATES.DRAFTING) {
-                updateDraftDisplay();
-            } else if (game.gameState === GAME_STATES.PLAYING) {
-                // Handle screen transition if needed
-                const currentScreen = document.querySelector('.screen.active');
-                if (currentScreen && currentScreen.id === 'draft-screen') {
-                    showScreen('game');
-                    const mapSvg = document.getElementById('railroad-svg');
-                    const positionsContainer = document.getElementById('player-positions');
-                    initRailroadMap(mapSvg);
-                    updatePlayerPositions(mapSvg, game.players, positionsContainer);
-                }
+            if (game.gameState === GAME_STATES.PLAYING) {
                 updateGameDisplay();
             }
         };
@@ -696,8 +683,18 @@ async function startMultiplayerGame(playerConfigs, roundCount) {
         };
 
         soundSystem.playGameStart();
-        showScreen('draft');
-        updateDraftDisplay();
+
+        // Go directly to game screen (skip draft - players already have 2 random cards)
+        showScreen('game');
+
+        // Initialize the railroad map
+        const mapSvg = document.getElementById('railroad-svg');
+        const positionsContainer = document.getElementById('player-positions');
+        initRailroadMap(mapSvg);
+        updatePlayerPositions(mapSvg, game.players, positionsContainer);
+        mapInitialized = true;
+
+        updateGameDisplay();
 
         // Broadcast initial state to clients
         gameSync.broadcastGameState();
@@ -724,7 +721,7 @@ async function startMultiplayerGame(playerConfigs, roundCount) {
         };
 
         soundSystem.playGameStart();
-        showScreen('draft');
+        showScreen('game');
         // Client waits for first state broadcast from host
     }
 }
@@ -732,13 +729,7 @@ async function startMultiplayerGame(playerConfigs, roundCount) {
 // Render state received from host (thin client)
 function renderClientState(state) {
     // Handle screen transitions
-    if (state.gameState === GAME_STATES.DRAFTING) {
-        if (clientCurrentScreen !== 'draft') {
-            clientCurrentScreen = 'draft';
-            showScreen('draft');
-        }
-        renderClientDraft(state);
-    } else if (state.gameState === GAME_STATES.PLAYING) {
+    if (state.gameState === GAME_STATES.PLAYING) {
         if (clientCurrentScreen !== 'game') {
             clientCurrentScreen = 'game';
             showScreen('game');
@@ -875,11 +866,18 @@ async function startGame() {
 
     soundSystem.playGameStart();
 
-    // Go to draft screen
-    showScreen('draft');
-    updateDraftDisplay();
+    // Go directly to game screen (skip draft - players already have 2 random cards)
+    showScreen('game');
 
-    // Check if first player is AI (shouldn't be in single-player, but handle anyway)
+    // Initialize the railroad map
+    const mapSvg = document.getElementById('railroad-svg');
+    const positionsContainer = document.getElementById('player-positions');
+    initRailroadMap(mapSvg);
+    updatePlayerPositions(mapSvg, game.players, positionsContainer);
+
+    updateGameDisplay();
+
+    // Check if first player is AI
     await checkForAITurn();
 }
 
@@ -1007,6 +1005,66 @@ function isLocalPlayerTurn() {
     return player.peerId === localPeerId;
 }
 
+// Apply immediate card effects
+function applyCardEffect(card, player) {
+    const effect = card.effect;
+
+    switch (effect.type) {
+        case 'gainFuel':
+            player.gainFuel(effect.amount);
+            break;
+        case 'gainGold':
+            player.gainGold(effect.amount);
+            break;
+        case 'discount':
+            player.hasDiscount = effect.amount;
+            break;
+        case 'distanceBonus':
+            // Applied during move calculation - stored in activeCards
+            break;
+        case 'allDieBonus':
+            // Applied during roll - stored in activeCards
+            break;
+        case 'doubleGold':
+            // Applied at station - stored in activeCards
+            break;
+        case 'maxAllDice':
+            // Set all dice to max - applied after roll
+            if (player.lastRollResults && player.lastRollResults.length > 0) {
+                player.lastRollResults.forEach(die => {
+                    const maxValue = parseInt(die.type.slice(1));
+                    die.baseValue = maxValue;
+                    die.finalValue = maxValue + die.bonus;
+                });
+            }
+            break;
+        case 'rerollAll':
+            // Reroll all dice
+            if (player.lastRollResults && player.lastRollResults.length > 0) {
+                player.roll();
+            }
+            break;
+        case 'matchGold':
+            // Gain gold equal to current gold (max specified)
+            const goldGain = Math.min(player.gold, effect.max);
+            player.gainGold(goldGain);
+            break;
+        case 'passengerBonus':
+            // Gain gold per passenger car
+            const passengerCount = player.trainCars.filter(car => car.type === 'passenger').length;
+            player.gainGold(passengerCount * effect.bonus);
+            break;
+        case 'doubleFuelBonus':
+        case 'doubleFuelTotal':
+        case 'doubleRoll':
+        case 'setDieValue':
+        case 'choice':
+            // These effects need more complex handling or UI interaction
+            // For now, they are stored in activeCards
+            break;
+    }
+}
+
 // Handle playing a card from hand
 function handlePlayCard(cardIndex) {
     // Client: send to host
@@ -1019,8 +1077,10 @@ function handlePlayCard(cardIndex) {
     if (!isLocalPlayerTurn()) return;
 
     soundSystem.playCardPlay();
-    const success = game.playCardFromHand(cardIndex);
-    if (success) {
+    const player = game.getCurrentPlayer();
+    const card = game.playCardFromHand(cardIndex);
+    if (card) {
+        applyCardEffect(card, player);
         updateGameDisplay();
         if (isMultiplayer) {
             gameSync.broadcastGameState();

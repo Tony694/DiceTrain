@@ -470,13 +470,13 @@ export function updatePlayerPositions(svg, players, positionsContainer) {
         positionsContainer.innerHTML = '';
         players.forEach((player, index) => {
             const laps = Math.floor(player.totalDistance / TOTAL_SPACES);
-            const currentSpace = player.totalDistance % TOTAL_SPACES;
 
             const entry = document.createElement('div');
             entry.className = 'position-entry';
             entry.innerHTML = `
                 <span class="position-dot player-${index + 1}"></span>
-                <span>${player.name}: ${player.totalDistance} mi (Lap ${laps + 1})</span>
+                <span class="position-name">${player.name}</span>
+                <span class="position-miles">${player.totalDistance}</span>
             `;
             positionsContainer.appendChild(entry);
         });

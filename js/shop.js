@@ -1,5 +1,7 @@
 // Shop system for Dice Train
 
+import { UNLOCK_TIERS } from './trainCar.js';
+
 // Train car icons mapping
 const TRAIN_CAR_ICONS = {
     // Coal/Engine types
@@ -7,8 +9,8 @@ const TRAIN_CAR_ICONS = {
     expressEngine: '\u{1F682}',   // Steam locomotive
     tankCar: '\u{1F6E2}\uFE0F',   // Oil drum
     coalHopper: '\u{1F4A8}',      // Steam/smoke
-    locomotiveExtra: '\u{1F683}', // Railway car
     waterTower: '\u{1F4A7}',      // Water droplet
+    steamBoiler: '\u{2699}\uFE0F', // Gear (machinery)
 
     // Passenger types
     passengerCar: '\u{1F68B}',    // Tram car
@@ -17,11 +19,11 @@ const TRAIN_CAR_ICONS = {
     observationDeck: '\u{1F50D}', // Magnifying glass
     firstClassCar: '\u{1F451}',   // Crown
     pullmanCar: '\u{2B50}',       // Star
+    mailCar: '\u{1F4EC}',         // Mailbox
 
     // Freight types
     freightCar: '\u{1F4E6}',      // Package
     cargoHold: '\u{1F4E6}',       // Package
-    mailCar: '\u{1F4EC}',         // Mailbox
     stockCar: '\u{1F404}',        // Cow
     boxcar: '\u{1F4E6}',          // Package
     gondolaCar: '\u{26CF}\uFE0F', // Pick (mining)
@@ -35,51 +37,90 @@ function getCarIcon(carId) {
     return TRAIN_CAR_ICONS[carId] || '\u{1F683}'; // Default to railway car
 }
 
-// Render train cars for purchase (4x4 grid, sorted by price)
-export function renderTrainCarShop(container, cars, playerGold, onPurchase) {
+// Render train cars for purchase (4x4 grid with tier unlocks)
+export function renderTrainCarShop(container, cars, playerGold, playerDistance, onPurchase) {
     container.innerHTML = '';
 
-    // Sort cars by cost (lowest to highest)
-    const sortedCars = [...cars].sort((a, b) => a.cost - b.cost);
+    // Group cars by unlock tier
+    UNLOCK_TIERS.forEach(tier => {
+        const tierCars = cars.filter(car => (car.unlockDistance || 0) === tier.distance);
 
-    sortedCars.forEach(car => {
-        const item = document.createElement('div');
-        item.className = 'shop-car-item';
-        if (playerGold < car.cost) {
-            item.classList.add('disabled');
+        if (tierCars.length === 0) return;
+
+        const isLocked = playerDistance < tier.distance;
+        const milesNeeded = tier.distance - playerDistance;
+
+        // Create tier header
+        const header = document.createElement('div');
+        header.className = 'shop-tier-header';
+        if (isLocked) {
+            header.classList.add('locked');
+            header.innerHTML = `<span class="tier-label">${tier.label}</span><span class="tier-unlock">(${milesNeeded} mi to unlock)</span>`;
+        } else {
+            header.textContent = tier.distance === 0 ? 'Available Now' : `Unlocked (${tier.distance} mi)`;
         }
+        container.appendChild(header);
 
-        // Build special info string
-        let specialInfo = '';
-        if (car.special === 'halfRollGold') {
-            specialInfo = '<span class="car-special-tag">Half Roll = Gold</span>';
-        } else if (car.special === 'lowestDieBonus') {
-            specialInfo = '<span class="car-special-tag">+1 Lowest Die</span>';
-        } else if (car.fuelPerStation) {
-            specialInfo = `<span class="car-fuel-tag">+${car.fuelPerStation} Fuel/Stn</span>`;
-        } else if (car.stationGold > 0) {
-            specialInfo = `<span class="car-gold-tag">+${car.stationGold}g/Stn</span>`;
-        }
+        // Create tier row
+        const tierRow = document.createElement('div');
+        tierRow.className = 'shop-tier-row';
+        if (isLocked) tierRow.classList.add('locked');
 
-        const icon = getCarIcon(car.id);
+        // Sort cars within tier by cost
+        const sortedTierCars = [...tierCars].sort((a, b) => a.cost - b.cost);
 
-        item.innerHTML = `
-            <div class="car-icon">${icon}</div>
-            <div class="car-cost">${car.cost}g</div>
-            <div class="car-name">${car.name}</div>
-            <div class="car-die">${car.die}</div>
-            ${specialInfo}
-        `;
+        sortedTierCars.forEach(car => {
+            const item = document.createElement('div');
+            item.className = 'shop-car-item';
 
-        if (playerGold >= car.cost) {
-            item.addEventListener('click', () => onPurchase(car.id));
-        }
+            const canAfford = playerGold >= car.cost;
+            const canBuy = canAfford && !isLocked;
 
-        container.appendChild(item);
+            if (!canAfford) item.classList.add('disabled');
+            if (isLocked) item.classList.add('locked');
+
+            // Build special info string based on car abilities
+            let specialInfo = '';
+            if (car.special === 'selfBonus') {
+                specialInfo = `<span class="car-special-tag">+${car.selfBonus} to this die</span>`;
+            } else if (car.special === 'lowestDieBonus') {
+                specialInfo = '<span class="car-special-tag">+1 Lowest Die</span>';
+            } else if (car.special === 'freeReroll') {
+                specialInfo = '<span class="car-special-tag">1 Free Reroll</span>';
+            } else if (car.special === 'passengerSynergy') {
+                specialInfo = '<span class="car-special-tag">+1g/Passenger</span>';
+            } else if (car.special === 'perCarGold') {
+                specialInfo = '<span class="car-special-tag">+1g/Car</span>';
+            } else if (car.special === 'maxDie') {
+                specialInfo = '<span class="car-special-tag">Max Any Die</span>';
+            } else if (car.fuelPerStation) {
+                specialInfo = `<span class="car-fuel-tag">+${car.fuelPerStation} Fuel/Stn</span>`;
+            } else if (car.stationGold > 0) {
+                specialInfo = `<span class="car-gold-tag">+${car.stationGold}g/Stn</span>`;
+            }
+
+            const icon = getCarIcon(car.id);
+
+            item.innerHTML = `
+                <div class="car-icon">${icon}</div>
+                <div class="car-cost">${car.cost}g</div>
+                <div class="car-name">${car.name}</div>
+                <div class="car-die">${car.die}</div>
+                ${specialInfo}
+            `;
+
+            if (canBuy) {
+                item.addEventListener('click', () => onPurchase(car.id));
+            }
+
+            tierRow.appendChild(item);
+        });
+
+        container.appendChild(tierRow);
     });
 }
 
-// Render enhancement cards for purchase
+// Render enhancement cards for purchase (all one-time effects now)
 export function renderEnhancementShop(container, cards, playerGold, onPurchase) {
     container.innerHTML = '';
 
@@ -95,16 +136,13 @@ export function renderEnhancementShop(container, cards, playerGold, onPurchase) 
             item.classList.add('disabled');
         }
 
-        const cardType = card.persistent ? 'Permanent' : 'One-Time';
-        const cardTypeClass = card.persistent ? 'card-persistent' : 'card-onetime';
-
         item.innerHTML = `
             <div class="shop-item-header">
                 <span class="shop-item-name">${card.name}</span>
                 <span class="shop-item-cost">${card.cost}g</span>
             </div>
             <div class="shop-item-desc">${card.description}</div>
-            <div class="shop-item-type ${cardTypeClass}">${cardType}</div>
+            <div class="shop-item-type card-onetime">One-Time</div>
         `;
 
         if (playerGold >= card.cost) {
@@ -116,8 +154,10 @@ export function renderEnhancementShop(container, cards, playerGold, onPurchase) 
 }
 
 // Check if player can afford any purchases
-export function canAffordAnything(cars, cards, playerGold) {
-    const cheapestCar = Math.min(...cars.map(c => c.cost));
+export function canAffordAnything(cars, cards, playerGold, playerDistance) {
+    // Only consider unlocked cars
+    const unlockedCars = cars.filter(car => (car.unlockDistance || 0) <= playerDistance);
+    const cheapestCar = unlockedCars.length > 0 ? Math.min(...unlockedCars.map(c => c.cost)) : Infinity;
     const cheapestCard = cards.length > 0 ? Math.min(...cards.map(c => c.cost)) : Infinity;
     return playerGold >= Math.min(cheapestCar, cheapestCard);
 }
