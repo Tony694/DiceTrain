@@ -12,6 +12,7 @@ class GameSync {
 
         // Callbacks
         this.onStateReceived = null;    // Client: called when state received from host
+        this.onHostUpdate = null;       // Host: called after processing any client action
         this.onGameEnd = null;          // Called when game ends
     }
 
@@ -34,24 +35,28 @@ class GameSync {
             if (!this._isCurrentPlayer(fromPeerId)) return;
             this.game.toggleDraftSelection(payload.cardIndex);
             this.broadcastGameState();
+            this._notifyHostUpdate();
         });
 
         peerManager.on(MessageTypes.ACTION_DRAFT_CONFIRM, (payload, fromPeerId) => {
             if (!this._isCurrentPlayer(fromPeerId)) return;
             this.game.confirmDraft();
             this.broadcastGameState();
+            this._notifyHostUpdate();
         });
 
         peerManager.on(MessageTypes.ACTION_ROLL, (payload, fromPeerId) => {
             if (!this._isCurrentPlayer(fromPeerId)) return;
             this.game.rollDice();
             this.broadcastGameState();
+            this._notifyHostUpdate();
         });
 
         peerManager.on(MessageTypes.ACTION_REROLL, (payload, fromPeerId) => {
             if (!this._isCurrentPlayer(fromPeerId)) return;
             this.game.rerollDie(payload.dieIndex);
             this.broadcastGameState();
+            this._notifyHostUpdate();
         });
 
         peerManager.on(MessageTypes.ACTION_CONTINUE, (payload, fromPeerId) => {
@@ -62,30 +67,35 @@ class GameSync {
                 this.game.advanceToShop();
             }
             this.broadcastGameState();
+            this._notifyHostUpdate();
         });
 
         peerManager.on(MessageTypes.ACTION_PURCHASE_CAR, (payload, fromPeerId) => {
             if (!this._isCurrentPlayer(fromPeerId)) return;
             this.game.purchaseTrainCar(payload.carId);
             this.broadcastGameState();
+            this._notifyHostUpdate();
         });
 
         peerManager.on(MessageTypes.ACTION_PURCHASE_CARD, (payload, fromPeerId) => {
             if (!this._isCurrentPlayer(fromPeerId)) return;
             this.game.purchaseCard(payload.cardIndex);
             this.broadcastGameState();
+            this._notifyHostUpdate();
         });
 
         peerManager.on(MessageTypes.ACTION_PLAY_CARD, (payload, fromPeerId) => {
             if (!this._isCurrentPlayer(fromPeerId)) return;
             this.game.playCardFromHand(payload.cardIndex);
             this.broadcastGameState();
+            this._notifyHostUpdate();
         });
 
         peerManager.on(MessageTypes.ACTION_END_TURN, (payload, fromPeerId) => {
             if (!this._isCurrentPlayer(fromPeerId)) return;
             const result = this.game.endTurn();
             this.broadcastGameState();
+            this._notifyHostUpdate();
 
             if (result.gameEnded) {
                 peerManager.broadcast(MessageTypes.GAME_END, {
@@ -94,6 +104,13 @@ class GameSync {
                 if (this.onGameEnd) this.onGameEnd({ standings: this.game.getStandings() });
             }
         });
+    }
+
+    // Notify host that state changed due to client action
+    _notifyHostUpdate() {
+        if (this.onHostUpdate) {
+            this.onHostUpdate();
+        }
     }
 
     // Setup message handlers for client (receives state from host)

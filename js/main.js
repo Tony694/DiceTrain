@@ -672,6 +672,25 @@ async function startMultiplayerGame(playerConfigs, roundCount) {
         // Initialize game sync for host
         gameSync.init(game, isHost, localPeerId);
 
+        // Update host UI when client actions are processed
+        gameSync.onHostUpdate = () => {
+            // Update display based on current game state
+            if (game.gameState === GAME_STATES.DRAFTING) {
+                updateDraftDisplay();
+            } else if (game.gameState === GAME_STATES.PLAYING) {
+                // Handle screen transition if needed
+                const currentScreen = document.querySelector('.screen.active');
+                if (currentScreen && currentScreen.id === 'draft-screen') {
+                    showScreen('game');
+                    const mapSvg = document.getElementById('railroad-svg');
+                    const positionsContainer = document.getElementById('player-positions');
+                    initRailroadMap(mapSvg);
+                    updatePlayerPositions(mapSvg, game.players, positionsContainer);
+                }
+                updateGameDisplay();
+            }
+        };
+
         gameSync.onGameEnd = (data) => {
             handleGameEnd();
         };
