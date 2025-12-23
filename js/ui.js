@@ -163,12 +163,35 @@ export function getRoundCount() {
 
 // Show a specific screen
 export function showScreen(screenName) {
+    // Get all screens including new ones
+    const menuScreen = document.getElementById('menu-screen');
+    const optionsScreen = document.getElementById('options-screen');
+    const lobbyScreen = document.getElementById('lobby-screen');
+    const browserScreen = document.getElementById('browser-screen');
+
+    // Remove active from all screens
     elements.setupScreen.classList.remove('active');
     elements.draftScreen.classList.remove('active');
     elements.gameScreen.classList.remove('active');
     elements.endScreen.classList.remove('active');
+    if (menuScreen) menuScreen.classList.remove('active');
+    if (optionsScreen) optionsScreen.classList.remove('active');
+    if (lobbyScreen) lobbyScreen.classList.remove('active');
+    if (browserScreen) browserScreen.classList.remove('active');
 
     switch (screenName) {
+        case 'menu':
+            if (menuScreen) menuScreen.classList.add('active');
+            break;
+        case 'options':
+            if (optionsScreen) optionsScreen.classList.add('active');
+            break;
+        case 'lobby':
+            if (lobbyScreen) lobbyScreen.classList.add('active');
+            break;
+        case 'browser':
+            if (browserScreen) browserScreen.classList.add('active');
+            break;
         case 'setup':
             elements.setupScreen.classList.add('active');
             break;

@@ -1,6 +1,8 @@
 // Sound system for Dice Train
 // Uses Web Audio API to generate sounds without external files
 
+import { GameOptions } from './options.js';
+
 class SoundSystem {
     constructor() {
         this.audioContext = null;
@@ -15,9 +17,20 @@ class SoundSystem {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.initialized = true;
+            // Load settings from options
+            this.loadFromOptions();
         } catch (e) {
             console.warn('Web Audio API not supported');
         }
+    }
+
+    // Load settings from GameOptions
+    loadFromOptions() {
+        const soundEnabled = GameOptions.get('soundEnabled');
+        const soundVolume = GameOptions.get('soundVolume');
+
+        this.muted = !soundEnabled;
+        this.volume = soundVolume / 100; // Convert 0-100 to 0-1
     }
 
     // Set volume (0-1)
@@ -25,9 +38,19 @@ class SoundSystem {
         this.volume = Math.max(0, Math.min(1, vol));
     }
 
+    // Set enabled state
+    setEnabled(enabled) {
+        this.muted = !enabled;
+    }
+
     // Toggle mute
     toggleMute() {
         this.muted = !this.muted;
+        return this.muted;
+    }
+
+    // Get current muted state
+    isMuted() {
         return this.muted;
     }
 

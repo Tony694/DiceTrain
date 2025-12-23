@@ -8,8 +8,124 @@
 </head>
 <body>
     <div id="app">
-        <!-- Setup Screen -->
-        <div id="setup-screen" class="screen active">
+        <!-- Main Menu Screen -->
+        <div id="menu-screen" class="screen active">
+            <h1>Dice Train</h1>
+            <p class="menu-subtitle">Est. 1869</p>
+            <div class="menu-container">
+                <button id="menu-single-player" class="btn btn-primary menu-btn">Single Player</button>
+                <button id="menu-host-game" class="btn btn-primary menu-btn">Host Multiplayer</button>
+                <button id="menu-browse-lobbies" class="btn btn-primary menu-btn">Browse Lobbies</button>
+                <button id="menu-options" class="btn btn-secondary menu-btn">Game Options</button>
+            </div>
+        </div>
+
+        <!-- Options Screen -->
+        <div id="options-screen" class="screen">
+            <h1>Game Options</h1>
+            <div class="options-container">
+                <div class="option-row">
+                    <label for="option-sound-enabled">Sound Effects</label>
+                    <div class="option-control">
+                        <input type="checkbox" id="option-sound-enabled" checked>
+                        <span class="toggle-label">On</span>
+                    </div>
+                </div>
+                <div class="option-row">
+                    <label for="option-volume">Sound Volume</label>
+                    <div class="option-control">
+                        <input type="range" id="option-volume" min="0" max="100" value="50">
+                        <span id="volume-display">50%</span>
+                    </div>
+                </div>
+                <div class="option-row">
+                    <label for="option-ai-speed">AI Player Speed</label>
+                    <div class="option-control">
+                        <select id="option-ai-speed">
+                            <option value="slow">Slow (2s delay)</option>
+                            <option value="normal" selected>Normal (1s delay)</option>
+                            <option value="fast">Fast (0.5s delay)</option>
+                            <option value="instant">Instant</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="options-buttons">
+                    <button id="save-options" class="btn btn-primary">Save & Back</button>
+                    <button id="reset-options" class="btn btn-secondary">Reset to Defaults</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lobby Screen (Host) -->
+        <div id="lobby-screen" class="screen">
+            <h1>Host Multiplayer</h1>
+            <div class="lobby-container">
+                <div class="lobby-config">
+                    <div class="lobby-option">
+                        <label for="lobby-name">Lobby Name</label>
+                        <input type="text" id="lobby-name" placeholder="My Game" maxlength="30">
+                    </div>
+                    <div class="lobby-option">
+                        <label for="lobby-password">Password (Optional)</label>
+                        <input type="password" id="lobby-password" placeholder="Leave blank for public">
+                    </div>
+                    <div class="lobby-option">
+                        <label for="lobby-max-players">Total Players</label>
+                        <select id="lobby-max-players">
+                            <option value="2">2 Players</option>
+                            <option value="3">3 Players</option>
+                            <option value="4" selected>4 Players</option>
+                        </select>
+                    </div>
+                    <div class="lobby-option">
+                        <label for="lobby-rounds">Number of Rounds</label>
+                        <select id="lobby-rounds">
+                            <option value="8">8 Rounds</option>
+                            <option value="12" selected>12 Rounds</option>
+                            <option value="16">16 Rounds</option>
+                            <option value="20">20 Rounds</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="lobby-code-display">
+                    <label>Lobby Code (Share with friends)</label>
+                    <div class="lobby-code" id="lobby-code">Generating...</div>
+                    <button id="copy-lobby-code" class="btn btn-secondary">Copy Code</button>
+                </div>
+                <div class="lobby-players-section">
+                    <h3>Players in Lobby</h3>
+                    <div id="lobby-players"></div>
+                    <button id="add-ai-player" class="btn btn-secondary">+ Add AI Player</button>
+                </div>
+                <div class="lobby-buttons">
+                    <button id="start-lobby-game" class="btn btn-primary" disabled>Start Game</button>
+                    <button id="cancel-lobby" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Browser Screen (Join) -->
+        <div id="browser-screen" class="screen">
+            <h1>Browse Lobbies</h1>
+            <div class="browser-container">
+                <div class="join-manual">
+                    <label for="join-code">Enter Lobby Code</label>
+                    <div class="join-input-row">
+                        <input type="text" id="join-code" placeholder="Enter code from host">
+                        <button id="join-lobby-btn" class="btn btn-primary">Join</button>
+                    </div>
+                </div>
+                <div class="join-name">
+                    <label for="join-player-name">Your Name</label>
+                    <input type="text" id="join-player-name" placeholder="Player" maxlength="20">
+                </div>
+                <div id="join-status" class="join-status hidden"></div>
+                <button id="back-to-menu-browser" class="btn btn-secondary">Back to Menu</button>
+            </div>
+        </div>
+
+        <!-- Setup Screen (Single Player) -->
+        <div id="setup-screen" class="screen">
             <h1>Dice Train</h1>
             <div class="setup-container">
                 <div class="setup-option">
@@ -31,7 +147,10 @@
                     </select>
                 </div>
                 <div id="player-names"></div>
-                <button id="start-game" class="btn btn-primary">Start Game</button>
+                <div class="setup-buttons">
+                    <button id="start-game" class="btn btn-primary">Start Game</button>
+                    <button id="back-to-menu-setup" class="btn btn-secondary">Back to Menu</button>
+                </div>
             </div>
         </div>
 
@@ -187,6 +306,7 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

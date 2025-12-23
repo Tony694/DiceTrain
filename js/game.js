@@ -40,14 +40,32 @@ export class Game {
     }
 
     // Initialize game with players
-    initialize(playerNames, totalRounds) {
+    // playerConfigs is optional array of {name, isAI, isLocal, peerId}
+    initialize(playerNames, totalRounds, playerConfigs = null) {
         this.reset();
         this.totalRounds = totalRounds;
 
         // Create players
-        playerNames.forEach((name, index) => {
-            this.players.push(new Player(index + 1, name));
-        });
+        if (playerConfigs) {
+            // Use detailed config for multiplayer/AI games
+            playerConfigs.forEach((config, index) => {
+                const player = new Player(
+                    index + 1,
+                    config.name,
+                    config.isAI || false,
+                    config.isLocal !== undefined ? config.isLocal : true
+                );
+                if (config.peerId) {
+                    player.peerId = config.peerId;
+                }
+                this.players.push(player);
+            });
+        } else {
+            // Simple initialization with names only (all human local players)
+            playerNames.forEach((name, index) => {
+                this.players.push(new Player(index + 1, name));
+            });
+        }
 
         // Setup deck and shop
         this.deck = createDeck();

@@ -25,17 +25,33 @@ import {
 } from './ui.js';
 import { soundSystem } from './sound.js';
 import { initRailroadMap, updatePlayerPositions } from './map.js';
+import { GameOptions } from './options.js';
+import { AI } from './ai.js';
+import { lobbyManager } from './network/lobby.js';
+import { gameSync } from './network/sync.js';
 
 // Game instance
 let game = new Game();
 let elements;
 let audioInitialized = false;
 
+// Game mode flags
+let isMultiplayer = false;
+let isHost = true;
+let localPeerId = null;
+
 // Initialize the application
 function init() {
+    // Load saved options
+    GameOptions.load();
+
     elements = initUI();
     setupEventListeners();
-    showScreen('setup');
+    setupMenuListeners();
+    setupOptionsListeners();
+
+    // Start at main menu
+    showScreen('menu');
 }
 
 // Ensure audio is initialized on first user interaction
@@ -128,21 +144,577 @@ function setupEventListeners() {
 // Handle back to main menu
 function handleBackToMenu() {
     game = new Game();
-    showScreen('setup');
+    isMultiplayer = false;
+    isHost = true;
+    showScreen('menu');
 }
 
-// Start a new game
-function startGame() {
-    const playerNames = getPlayerNames();
-    const roundCount = getRoundCount();
+// Setup main menu listeners
+function setupMenuListeners() {
+    const menuSinglePlayer = document.getElementById('menu-single-player');
+    const menuHostGame = document.getElementById('menu-host-game');
+    const menuBrowseLobbies = document.getElementById('menu-browse-lobbies');
+    const menuOptions = document.getElementById('menu-options');
+    const backToMenuSetup = document.getElementById('back-to-menu-setup');
+    const backToMenuBrowser = document.getElementById('back-to-menu-browser');
 
-    game.initialize(playerNames, roundCount);
+    if (menuSinglePlayer) {
+        menuSinglePlayer.addEventListener('click', () => {
+            ensureAudioInit();
+            soundSystem.playClick();
+            isMultiplayer = false;
+            isHost = true;
+            showScreen('setup');
+        });
+    }
+
+    if (menuHostGame) {
+        menuHostGame.addEventListener('click', () => {
+            ensureAudioInit();
+            soundSystem.playClick();
+            handleHostMultiplayer();
+        });
+    }
+
+    if (menuBrowseLobbies) {
+        menuBrowseLobbies.addEventListener('click', () => {
+            ensureAudioInit();
+            soundSystem.playClick();
+            showScreen('browser');
+        });
+    }
+
+    if (menuOptions) {
+        menuOptions.addEventListener('click', () => {
+            ensureAudioInit();
+            soundSystem.playClick();
+            loadOptionsToUI();
+            showScreen('options');
+        });
+    }
+
+    if (backToMenuSetup) {
+        backToMenuSetup.addEventListener('click', () => {
+            soundSystem.playClick();
+            showScreen('menu');
+        });
+    }
+
+    if (backToMenuBrowser) {
+        backToMenuBrowser.addEventListener('click', () => {
+            soundSystem.playClick();
+            showScreen('menu');
+        });
+    }
+
+    // Lobby screen buttons
+    const cancelLobby = document.getElementById('cancel-lobby');
+    const copyLobbyCode = document.getElementById('copy-lobby-code');
+    const startLobbyGame = document.getElementById('start-lobby-game');
+
+    if (cancelLobby) {
+        cancelLobby.addEventListener('click', () => {
+            soundSystem.playClick();
+            lobbyManager.closeLobby();
+            isMultiplayer = false;
+            isHost = true;
+            showScreen('menu');
+        });
+    }
+
+    if (copyLobbyCode) {
+        copyLobbyCode.addEventListener('click', () => {
+            soundSystem.playClick();
+            const code = document.getElementById('lobby-code').textContent;
+            navigator.clipboard.writeText(code).catch(() => {});
+        });
+    }
+
+    if (startLobbyGame) {
+        startLobbyGame.addEventListener('click', () => {
+            soundSystem.playClick();
+            lobbyManager.startGame();
+        });
+    }
+
+    // Add AI player button
+    const addAIPlayer = document.getElementById('add-ai-player');
+    if (addAIPlayer) {
+        addAIPlayer.addEventListener('click', () => {
+            soundSystem.playClick();
+            lobbyManager.addAIPlayer();
+        });
+    }
+
+    // Browser screen buttons
+    const joinLobbyBtn = document.getElementById('join-lobby-btn');
+    if (joinLobbyBtn) {
+        joinLobbyBtn.addEventListener('click', () => {
+            soundSystem.playClick();
+            handleJoinLobby();
+        });
+    }
+}
+
+// Setup options screen listeners
+function setupOptionsListeners() {
+    const soundEnabled = document.getElementById('option-sound-enabled');
+    const volumeSlider = document.getElementById('option-volume');
+    const volumeDisplay = document.getElementById('volume-display');
+    const aiSpeed = document.getElementById('option-ai-speed');
+    const saveOptions = document.getElementById('save-options');
+    const resetOptions = document.getElementById('reset-options');
+
+    if (soundEnabled) {
+        soundEnabled.addEventListener('change', () => {
+            const enabled = soundEnabled.checked;
+            document.querySelector('.toggle-label').textContent = enabled ? 'On' : 'Off';
+            // Preview sound if enabling
+            if (enabled) {
+                ensureAudioInit();
+                soundSystem.setEnabled(true);
+                soundSystem.playClick();
+            } else {
+                soundSystem.setEnabled(false);
+            }
+        });
+    }
+
+    if (volumeSlider && volumeDisplay) {
+        volumeSlider.addEventListener('input', () => {
+            const vol = volumeSlider.value;
+            volumeDisplay.textContent = `${vol}%`;
+            ensureAudioInit();
+            soundSystem.setVolume(parseInt(vol) / 100);
+        });
+    }
+
+    if (saveOptions) {
+        saveOptions.addEventListener('click', () => {
+            soundSystem.playClick();
+            saveOptionsFromUI();
+            showScreen('menu');
+        });
+    }
+
+    if (resetOptions) {
+        resetOptions.addEventListener('click', () => {
+            soundSystem.playClick();
+            GameOptions.reset();
+            loadOptionsToUI();
+            soundSystem.loadFromOptions();
+        });
+    }
+}
+
+// Load current options values to UI
+function loadOptionsToUI() {
+    const soundEnabled = document.getElementById('option-sound-enabled');
+    const volumeSlider = document.getElementById('option-volume');
+    const volumeDisplay = document.getElementById('volume-display');
+    const aiSpeed = document.getElementById('option-ai-speed');
+    const toggleLabel = document.querySelector('.toggle-label');
+
+    if (soundEnabled) {
+        soundEnabled.checked = GameOptions.get('soundEnabled');
+        if (toggleLabel) {
+            toggleLabel.textContent = soundEnabled.checked ? 'On' : 'Off';
+        }
+    }
+
+    if (volumeSlider) {
+        const vol = GameOptions.get('soundVolume');
+        volumeSlider.value = vol;
+        if (volumeDisplay) {
+            volumeDisplay.textContent = `${vol}%`;
+        }
+    }
+
+    if (aiSpeed) {
+        aiSpeed.value = GameOptions.get('aiSpeed');
+    }
+}
+
+// Save options from UI to storage
+function saveOptionsFromUI() {
+    const soundEnabled = document.getElementById('option-sound-enabled');
+    const volumeSlider = document.getElementById('option-volume');
+    const aiSpeed = document.getElementById('option-ai-speed');
+
+    if (soundEnabled) {
+        GameOptions.set('soundEnabled', soundEnabled.checked);
+    }
+
+    if (volumeSlider) {
+        GameOptions.set('soundVolume', parseInt(volumeSlider.value));
+    }
+
+    if (aiSpeed) {
+        GameOptions.set('aiSpeed', aiSpeed.value);
+    }
+
+    GameOptions.save();
+
+    // Apply to sound system
+    soundSystem.loadFromOptions();
+}
+
+// Handle host multiplayer button
+async function handleHostMultiplayer() {
+    isMultiplayer = true;
+    isHost = true;
+
+    // Get lobby config from UI
+    const lobbyNameInput = document.getElementById('lobby-name');
+    const lobbyPasswordInput = document.getElementById('lobby-password');
+    const lobbyRoundsSelect = document.getElementById('lobby-rounds');
+    const lobbyMaxPlayersSelect = document.getElementById('lobby-max-players');
+    const lobbyCodeEl = document.getElementById('lobby-code');
+    const startLobbyGameBtn = document.getElementById('start-lobby-game');
+
+    if (lobbyCodeEl) {
+        lobbyCodeEl.textContent = 'Connecting...';
+    }
+
+    showScreen('lobby');
+
+    try {
+        // Setup lobby callbacks
+        lobbyManager.onLobbyUpdate = updateLobbyUI;
+        lobbyManager.onPlayerJoined = (player) => {
+            soundSystem.playClick();
+            updateLobbyUI(lobbyManager.getLobbyState());
+        };
+        lobbyManager.onPlayerLeft = () => {
+            updateLobbyUI(lobbyManager.getLobbyState());
+        };
+        lobbyManager.onError = (error) => {
+            console.error('Lobby error:', error);
+        };
+
+        // Create the lobby
+        const result = await lobbyManager.createLobby({
+            name: lobbyNameInput?.value || 'Game Lobby',
+            hostName: 'Host',
+            password: lobbyPasswordInput?.value || null,
+            maxPlayers: parseInt(lobbyMaxPlayersSelect?.value) || 4,
+            roundCount: parseInt(lobbyRoundsSelect?.value) || 12
+        });
+
+        localPeerId = result.lobbyCode;
+
+        if (lobbyCodeEl) {
+            lobbyCodeEl.textContent = result.lobbyCode;
+        }
+
+        updateLobbyUI(result.lobbyState);
+
+        // Setup game start handler
+        lobbyManager.onGameStart = (data) => {
+            startMultiplayerGame(data.playerConfigs, data.roundCount);
+        };
+
+    } catch (error) {
+        console.error('Failed to create lobby:', error);
+        if (lobbyCodeEl) {
+            lobbyCodeEl.textContent = 'Error - Try Again';
+        }
+    }
+}
+
+// Update lobby UI
+function updateLobbyUI(lobbyState) {
+    if (!lobbyState) return;
+
+    const playersContainer = document.getElementById('lobby-players');
+    const startBtn = document.getElementById('start-lobby-game');
+    const addAIBtn = document.getElementById('add-ai-player');
+
+    if (playersContainer) {
+        playersContainer.innerHTML = lobbyState.players.map(player => `
+            <div class="lobby-player ${player.isHost ? 'host' : ''} ${player.isAI ? 'ai' : ''}">
+                <span class="player-name">${player.name}</span>
+                <span class="player-status">
+                    ${player.isHost ? '(Host)' : ''}
+                    ${player.isAI ? '(AI)' : ''}
+                </span>
+                ${isHost && !player.isHost ? `<button class="kick-btn" data-player-id="${player.id}">X</button>` : ''}
+            </div>
+        `).join('');
+
+        // Add kick button handlers
+        playersContainer.querySelectorAll('.kick-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const playerId = btn.dataset.playerId;
+                lobbyManager.kickPlayer(playerId);
+            });
+        });
+    }
+
+    if (startBtn) {
+        startBtn.disabled = !lobbyManager.canStartGame();
+    }
+
+    if (addAIBtn) {
+        addAIBtn.disabled = lobbyManager.isFull();
+    }
+}
+
+// Handle join lobby
+async function handleJoinLobby() {
+    const codeInput = document.getElementById('join-code');
+    const nameInput = document.getElementById('join-player-name');
+    const passwordInput = document.getElementById('join-password');
+    const statusDiv = document.getElementById('join-status');
+
+    const code = codeInput?.value?.trim();
+    const name = nameInput?.value?.trim() || 'Player';
+    const password = passwordInput?.value || null;
+
+    if (!code) {
+        if (statusDiv) {
+            statusDiv.classList.remove('hidden');
+            statusDiv.textContent = 'Please enter a lobby code';
+            statusDiv.className = 'join-status error';
+        }
+        return;
+    }
+
+    if (statusDiv) {
+        statusDiv.classList.remove('hidden');
+        statusDiv.textContent = 'Connecting...';
+        statusDiv.className = 'join-status';
+    }
+
+    isMultiplayer = true;
+    isHost = false;
+
+    try {
+        // Setup lobby callbacks for client
+        lobbyManager.onLobbyUpdate = (state) => {
+            // Client sees lobby updates while waiting
+            console.log('Lobby updated:', state);
+        };
+        lobbyManager.onGameStart = (data) => {
+            startMultiplayerGame(data.playerConfigs, data.roundCount);
+        };
+        lobbyManager.onKicked = (reason) => {
+            if (statusDiv) {
+                statusDiv.textContent = reason || 'Disconnected from lobby';
+                statusDiv.className = 'join-status error';
+            }
+            showScreen('browser');
+        };
+
+        // Join the lobby
+        const lobbyState = await lobbyManager.joinLobby(code, name, password);
+        localPeerId = lobbyManager.localPlayerId;
+
+        if (statusDiv) {
+            statusDiv.textContent = 'Connected! Waiting for host to start...';
+            statusDiv.className = 'join-status success';
+        }
+
+    } catch (error) {
+        console.error('Failed to join lobby:', error);
+        if (statusDiv) {
+            statusDiv.textContent = error.message || 'Failed to connect';
+            statusDiv.className = 'join-status error';
+        }
+        isMultiplayer = false;
+        isHost = true;
+    }
+}
+
+// AI thinking indicator
+let aiThinkingElement = null;
+
+function showAIThinking(playerName) {
+    if (aiThinkingElement) return;
+
+    aiThinkingElement = document.createElement('div');
+    aiThinkingElement.className = 'ai-thinking';
+    aiThinkingElement.innerHTML = `
+        <div class="ai-thinking-text">${playerName} is thinking<span class="ai-thinking-dots">...</span></div>
+    `;
+    document.body.appendChild(aiThinkingElement);
+}
+
+function hideAIThinking() {
+    if (aiThinkingElement) {
+        aiThinkingElement.remove();
+        aiThinkingElement = null;
+    }
+}
+
+// Execute AI turn
+async function executeAITurn(player) {
+    showAIThinking(player.name);
+
+    const callbacks = {
+        onRoll: async () => {
+            soundSystem.playDiceRoll();
+            await animateDiceRoll(600);
+            game.rollDice();
+            updateGameDisplay();
+        },
+        onReroll: async (dieIndex) => {
+            soundSystem.playClick();
+            game.rerollDie(dieIndex);
+            updateGameDisplay();
+        },
+        onContinueToStation: async () => {
+            soundSystem.playPhaseTransition();
+            const result = game.advanceToStation();
+            if (result) {
+                soundSystem.playStationArrival();
+                renderStationEarnings(result.earnings, result.fuelGained);
+                updateGameDisplay();
+            }
+        },
+        onContinueToShop: async () => {
+            soundSystem.playPhaseTransition();
+            game.advanceToShop();
+            updateGameDisplay();
+        },
+        onPurchase: async (type, id) => {
+            let success = false;
+            if (type === 'car') {
+                success = game.purchaseTrainCar(id);
+            } else {
+                success = game.purchaseCard(id);
+            }
+            if (success) {
+                soundSystem.playPurchase();
+                updateGameDisplay();
+            }
+            return success;
+        },
+        onEndTurn: async () => {
+            // Don't actually end turn here - let the caller handle it
+        },
+        onUpdate: () => {
+            updateGameDisplay();
+        }
+    };
+
+    await AI.executeTurn(game, player, callbacks);
+
+    hideAIThinking();
+}
+
+// Execute AI draft
+async function executeAIDraft(player) {
+    showAIThinking(player.name);
+
+    await AI.delay();
+
+    // AI randomly selects 2 of 3 cards (simple strategy)
+    const indices = [0, 1, 2];
+    // Shuffle and pick first 2
+    for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    game.toggleDraftSelection(indices[0]);
+    await AI.delay();
+    soundSystem.playDraftSelect();
+
+    game.toggleDraftSelection(indices[1]);
+    await AI.delay();
+    soundSystem.playDraftSelect();
+
+    hideAIThinking();
+
+    // Confirm draft
+    handleConfirmDraft();
+}
+
+// Check and execute AI turn if needed
+async function checkForAITurn() {
+    const player = game.getCurrentPlayer();
+
+    if (player && player.isAI && player.isLocal) {
+        if (game.gameState === GAME_STATES.DRAFTING) {
+            await executeAIDraft(player);
+        } else if (game.gameState === GAME_STATES.PLAYING) {
+            await executeAITurn(player);
+            // After AI turn, end their turn
+            const result = game.endTurn();
+            if (result.gameEnded) {
+                handleGameEnd();
+            } else {
+                updateGameDisplay();
+                // Check if next player is also AI
+                await checkForAITurn();
+            }
+        }
+    }
+}
+
+// Start a multiplayer game (called when host starts or client receives game start)
+async function startMultiplayerGame(playerConfigs, roundCount) {
+    game = new Game();
+
+    // Initialize game with player configs
+    const playerNames = playerConfigs.map(p => p.name);
+    game.initialize(playerNames, roundCount, playerConfigs);
+
+    // Initialize game sync
+    gameSync.init(game, isHost, localPeerId);
+
+    // Setup sync callbacks
+    if (!isHost) {
+        gameSync.onStateUpdate = () => {
+            updateGameDisplay();
+            updateDraftDisplay();
+        };
+    }
+
+    gameSync.onGameEnd = (data) => {
+        handleGameEnd();
+    };
 
     soundSystem.playGameStart();
 
     // Go to draft screen
     showScreen('draft');
     updateDraftDisplay();
+
+    // If host, broadcast initial state and check for AI
+    if (isHost) {
+        gameSync.broadcastGameState();
+        await checkForAITurn();
+    }
+}
+
+// Start a new game
+async function startGame() {
+    const playerNames = getPlayerNames();
+    const roundCount = getRoundCount();
+
+    // In single-player mode, first player is human, rest are AI
+    if (!isMultiplayer) {
+        const playerConfigs = playerNames.map((name, index) => ({
+            name: name,
+            isAI: index > 0, // First player is human, rest are AI
+            isLocal: true    // All players run locally in single-player
+        }));
+        game.initialize(playerNames, roundCount, playerConfigs);
+    } else {
+        // Multiplayer initialization will be handled separately
+        game.initialize(playerNames, roundCount);
+    }
+
+    soundSystem.playGameStart();
+
+    // Go to draft screen
+    showScreen('draft');
+    updateDraftDisplay();
+
+    // Check if first player is AI (shouldn't be in single-player, but handle anyway)
+    await checkForAITurn();
 }
 
 // Update draft display
@@ -162,7 +734,7 @@ function handleToggleDraftCard(cardIndex) {
 }
 
 // Handle confirming draft selections
-function handleConfirmDraft() {
+async function handleConfirmDraft() {
     const result = game.confirmDraft();
 
     if (game.gameState === GAME_STATES.PLAYING) {
@@ -176,9 +748,15 @@ function handleConfirmDraft() {
         updatePlayerPositions(mapSvg, game.players, positionsContainer);
 
         updateGameDisplay();
+
+        // Check if first player is AI
+        await checkForAITurn();
     } else {
         // Next player drafts
         updateDraftDisplay();
+
+        // Check if next player is AI
+        await checkForAITurn();
     }
 }
 
@@ -344,13 +922,15 @@ function refreshShopDisplay() {
 }
 
 // Handle end turn
-function handleEndTurn() {
+async function handleEndTurn() {
     const result = game.endTurn();
 
     if (result.gameEnded) {
         handleGameEnd();
     } else {
         updateGameDisplay();
+        // Check if next player is AI
+        await checkForAITurn();
     }
 }
 
@@ -364,7 +944,9 @@ function handleGameEnd() {
 // Handle play again
 function handlePlayAgain() {
     game = new Game();
-    showScreen('setup');
+    isMultiplayer = false;
+    isHost = true;
+    showScreen('menu');
 }
 
 // Initialize when DOM is ready

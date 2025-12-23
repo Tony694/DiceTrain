@@ -4,9 +4,12 @@ import { getStartingCars } from './trainCar.js';
 import { rollDice, applyModifiers, calculateTotal, getDiceFromCars } from './dice.js';
 
 export class Player {
-    constructor(id, name) {
+    constructor(id, name, isAI = false, isLocal = true) {
         this.id = id;
         this.name = name;
+        this.isAI = isAI;       // True for computer-controlled players
+        this.isLocal = isLocal; // True for players running on this machine
+        this.peerId = null;     // PeerJS peer ID for networked players
         this.gold = 6; // Start with 6 gold
         this.fuel = 0; // Fuel is tracked on player, initialized from Coal Tender
         this.totalDistance = 0;
