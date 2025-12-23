@@ -664,11 +664,30 @@ async function startMultiplayerGame(playerConfigs, roundCount) {
     // Initialize game sync
     gameSync.init(game, isHost, localPeerId);
 
+    // Track current screen for clients
+    let clientCurrentScreen = 'draft';
+
     // Setup sync callbacks
     if (!isHost) {
-        gameSync.onStateUpdate = () => {
-            updateGameDisplay();
-            updateDraftDisplay();
+        gameSync.onStateUpdate = (state) => {
+            // Check if we need to transition screens
+            if (state.gameState === GAME_STATES.PLAYING && clientCurrentScreen === 'draft') {
+                clientCurrentScreen = 'game';
+                showScreen('game');
+
+                // Initialize the railroad map
+                const mapSvg = document.getElementById('railroad-svg');
+                const positionsContainer = document.getElementById('player-positions');
+                initRailroadMap(mapSvg);
+                updatePlayerPositions(mapSvg, game.players, positionsContainer);
+            }
+
+            // Update appropriate display based on game state
+            if (state.gameState === GAME_STATES.DRAFTING) {
+                updateDraftDisplay();
+            } else if (state.gameState === GAME_STATES.PLAYING) {
+                updateGameDisplay();
+            }
         };
     }
 
@@ -728,14 +747,38 @@ function updateDraftDisplay() {
 
 // Handle toggling a draft card selection
 function handleToggleDraftCard(cardIndex) {
+    if (!isLocalPlayerTurn()) return;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendDraftSelect(cardIndex);
+        return;
+    }
+
     soundSystem.playDraftSelect();
     game.toggleDraftSelection(cardIndex);
     updateDraftDisplay();
+
+    if (isMultiplayer && isHost) {
+        gameSync.broadcastGameState();
+    }
 }
 
 // Handle confirming draft selections
 async function handleConfirmDraft() {
+    if (!isLocalPlayerTurn()) return;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendDraftConfirm();
+        return;
+    }
+
     const result = game.confirmDraft();
+
+    if (isMultiplayer && isHost) {
+        gameSync.broadcastGameState();
+    }
 
     if (game.gameState === GAME_STATES.PLAYING) {
         // All players drafted, start the game
@@ -800,18 +843,52 @@ function updateGameDisplay() {
     }
 }
 
+// Check if it's the local player's turn
+function isLocalPlayerTurn() {
+    const player = game.getCurrentPlayer();
+    if (!player) return false;
+
+    // In single player, first player is always local human
+    if (!isMultiplayer) {
+        return !player.isAI;
+    }
+
+    // In multiplayer, check if this player's peerId matches ours
+    return player.peerId === localPeerId;
+}
+
 // Handle playing a card from hand
 function handlePlayCard(cardIndex) {
+    if (!isLocalPlayerTurn()) return;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendPlayCard(cardIndex);
+        return;
+    }
+
     soundSystem.playCardPlay();
     const success = game.playCardFromHand(cardIndex);
     if (success) {
         updateGameDisplay();
+        if (isMultiplayer && isHost) {
+            gameSync.broadcastGameState();
+        }
     }
 }
 
 // Handle roll dice
 async function handleRollDice() {
+    if (!isLocalPlayerTurn()) return;
+
     elements.rollDiceBtn.disabled = true;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendRoll();
+        elements.rollDiceBtn.disabled = false;
+        return;
+    }
 
     // Start animation and sound
     soundSystem.playDiceRoll();
@@ -834,6 +911,10 @@ async function handleRollDice() {
     // Update player resources (fuel may have changed display)
     updatePlayerResources(player);
 
+    if (isMultiplayer && isHost) {
+        gameSync.broadcastGameState();
+    }
+
     elements.rollDiceBtn.disabled = false;
 }
 
@@ -847,8 +928,16 @@ function setupRerollHandlers() {
 
 // Handle reroll
 async function handleReroll(dieIndex) {
+    if (!isLocalPlayerTurn()) return;
+
     const player = game.getCurrentPlayer();
     if (!player.canReroll()) return;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendReroll(dieIndex);
+        return;
+    }
 
     soundSystem.playClick();
     const success = game.rerollDie(dieIndex);
@@ -864,38 +953,86 @@ async function handleReroll(dieIndex) {
         if (rerollsRemaining > 0) {
             setupRerollHandlers();
         }
+
+        if (isMultiplayer && isHost) {
+            gameSync.broadcastGameState();
+        }
     }
 }
 
 // Handle continue to station
 function handleContinueToStation() {
+    if (!isLocalPlayerTurn()) return;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendContinue('station');
+        return;
+    }
+
     const result = game.advanceToStation();
 
     if (result) {
         soundSystem.playStationArrival();
         renderStationEarnings(result.earnings, result.fuelGained);
         updateGameDisplay();
+
+        if (isMultiplayer && isHost) {
+            gameSync.broadcastGameState();
+        }
     }
 }
 
 // Handle continue to shop
 function handleContinueToShop() {
+    if (!isLocalPlayerTurn()) return;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendContinue('shop');
+        return;
+    }
+
     game.advanceToShop();
     updateGameDisplay();
+
+    if (isMultiplayer && isHost) {
+        gameSync.broadcastGameState();
+    }
 }
 
 // Handle purchase train car
 function handlePurchaseTrainCar(carId) {
+    if (!isLocalPlayerTurn()) return;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendPurchaseCar(carId);
+        return;
+    }
+
     const success = game.purchaseTrainCar(carId);
     if (success) {
         soundSystem.playPurchase();
         // Refresh shop display to show updated gold and remaining cars
         refreshShopDisplay();
+
+        if (isMultiplayer && isHost) {
+            gameSync.broadcastGameState();
+        }
     }
 }
 
 // Handle purchase card
 function handlePurchaseCard(cardIndex) {
+    if (!isLocalPlayerTurn()) return;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendPurchaseCard(cardIndex);
+        return;
+    }
+
     const success = game.purchaseCard(cardIndex);
     if (success) {
         soundSystem.playPurchase();
@@ -903,6 +1040,10 @@ function handlePurchaseCard(cardIndex) {
         refreshShopDisplay();
         const player = game.getCurrentPlayer();
         renderCardHand(player.cardHand, handlePlayCard);
+
+        if (isMultiplayer && isHost) {
+            gameSync.broadcastGameState();
+        }
     }
 }
 
@@ -923,7 +1064,19 @@ function refreshShopDisplay() {
 
 // Handle end turn
 async function handleEndTurn() {
+    if (!isLocalPlayerTurn()) return;
+
+    // Multiplayer client: send action to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendEndTurn();
+        return;
+    }
+
     const result = game.endTurn();
+
+    if (isMultiplayer && isHost) {
+        gameSync.broadcastGameState();
+    }
 
     if (result.gameEnded) {
         handleGameEnd();
