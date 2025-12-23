@@ -56,7 +56,7 @@ export function createLobbyState(config) {
     };
 }
 
-// Game state for synchronization (minimal - just what clients need)
+// Game state for synchronization (full state for thin clients)
 export function createGameStateSync(game) {
     const state = game.getState();
     return {
@@ -68,7 +68,9 @@ export function createGameStateSync(game) {
         players: game.players.map(p => ({
             id: p.id,
             name: p.name,
+            peerId: p.peerId,  // Include peerId so clients know which player is theirs
             isAI: p.isAI,
+            isLocal: p.isLocal,
             gold: p.gold,
             fuel: p.fuel,
             totalDistance: p.totalDistance,
