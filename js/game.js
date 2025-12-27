@@ -68,17 +68,11 @@ export class Game {
         }
 
         // Setup deck and shop
-        this.deck = createDeck();
+        // Pass player count to filter out multiplayer cards in single-player
+        this.deck = createDeck(this.players.length);
         this.availableCars = getPurchasableCars();
 
-        // Give each player 2 random cards from the deck
-        this.players.forEach(player => {
-            const cards = drawCards(this.deck, 2);
-            cards.forEach(card => player.addCardToHand(card));
-        });
-
-        // Shuffle remaining deck and draw 3 cards for shop
-        this.deck = shuffleDeck(this.deck);
+        // Draw 3 cards for shop (visible to all players)
         this.availableCards = drawCards(this.deck, 3);
 
         // Start playing phase directly (skip draft)
@@ -194,11 +188,7 @@ export class Game {
     advanceToShop() {
         if (this.phase !== PHASES.STATION) return false;
         this.phase = PHASES.SHOP;
-
-        // Shuffle remaining deck and any unpurchased cards back together, then draw 3
-        this.deck = shuffleDeck([...this.deck, ...this.availableCards]);
-        this.availableCards = drawCards(this.deck, 3);
-
+        // Cards persist - no reshuffling, players see the same 3 cards
         return true;
     }
 
@@ -230,12 +220,30 @@ export class Game {
         const player = this.getCurrentPlayer();
 
         if (player.purchaseCard(card)) {
-            // Remove card from available (no replacement during same shop phase)
+            // Remove purchased card and draw replacement from deck
             this.availableCards.splice(cardIndex, 1);
+            const replacement = drawCards(this.deck, 1);
+            if (replacement.length > 0) {
+                this.availableCards.push(replacement[0]);
+            }
             return true;
         }
 
         return false;
+    }
+
+    // Draw a random card from the deck (costs 5g)
+    drawRandomCard() {
+        if (this.phase !== PHASES.SHOP) return null;
+        if (this.deck.length === 0) return null;
+
+        const player = this.getCurrentPlayer();
+        if (player.gold < 5) return null;
+
+        player.gold -= 5;
+        const card = drawCards(this.deck, 1)[0];
+        player.addCardToHand(card);
+        return card;
     }
 
     // Play a card from current player's hand

@@ -10,7 +10,7 @@ export class Player {
         this.isAI = isAI;       // True for computer-controlled players
         this.isLocal = isLocal; // True for players running on this machine
         this.peerId = null;     // PeerJS peer ID for networked players
-        this.gold = 6; // Start with 6 gold
+        this.gold = 3; // Start with 3 gold
         this.fuel = 0; // Fuel is tracked on player, initialized from Coal Tender
         this.totalDistance = 0;
         this.trainCars = getStartingCars();
@@ -52,6 +52,23 @@ export class Player {
 
         // Set up fuel-based rerolls
         this.fuelRerollsRemaining = this.fuel;
+
+        return this.lastRollResults;
+    }
+
+    // Reapply modifiers to existing roll (used after playing cards)
+    reapplyModifiers() {
+        if (!this.lastRollResults || this.lastRollResults.length === 0) {
+            return this.lastRollResults;
+        }
+
+        // Preserve base values, reset bonuses
+        this.lastRollResults = applyModifiers(
+            this.lastRollResults.map(d => ({ ...d, bonus: 0, finalValue: 0 })),
+            this.activeCards,
+            this.trainCars,
+            this.fuel
+        );
 
         return this.lastRollResults;
     }

@@ -117,8 +117,18 @@ function setupEventListeners() {
     }
 
     // Sound controls
+    const musicToggle = document.getElementById('music-toggle');
     const soundToggle = document.getElementById('sound-toggle');
     const volumeSlider = document.getElementById('volume-slider');
+
+    if (musicToggle) {
+        musicToggle.addEventListener('click', () => {
+            ensureAudioInit();
+            const playing = soundSystem.toggleMusic();
+            musicToggle.classList.toggle('active', playing);
+            musicToggle.querySelector('.sound-icon').textContent = playing ? '\u{1F3B6}' : '\u{1F3B5}';
+        });
+    }
 
     if (soundToggle) {
         soundToggle.addEventListener('click', () => {
@@ -828,8 +838,10 @@ function renderClientGame(state) {
                 currentPlayer,
                 state.availableCars,
                 state.availableCards,
+                game.deck.length,
                 isMyTurn ? handlePurchaseTrainCar : null,
-                isMyTurn ? handlePurchaseCard : null
+                isMyTurn ? handlePurchaseCard : null,
+                isMyTurn ? handleDrawRandomCard : null
             );
             break;
     }
@@ -983,8 +995,10 @@ function updateGameDisplay() {
                 player,
                 state.availableCars,
                 state.availableCards,
+                game.deck.length,
                 handlePurchaseTrainCar,
-                handlePurchaseCard
+                handlePurchaseCard,
+                handleDrawRandomCard
             );
             break;
     }
@@ -1023,23 +1037,24 @@ function applyCardEffect(card, player) {
             // Applied during move calculation - stored in activeCards
             break;
         case 'allDieBonus':
-            // Applied during roll - stored in activeCards
+            // Reapply modifiers to update dice with new bonus
+            player.reapplyModifiers();
             break;
         case 'doubleGold':
             // Applied at station - stored in activeCards
             break;
         case 'maxAllDice':
-            // Set all dice to max - applied after roll
+            // Set all dice to max, then reapply modifiers for bonuses
             if (player.lastRollResults && player.lastRollResults.length > 0) {
                 player.lastRollResults.forEach(die => {
                     const maxValue = parseInt(die.type.slice(1));
                     die.baseValue = maxValue;
-                    die.finalValue = maxValue + die.bonus;
                 });
+                player.reapplyModifiers();
             }
             break;
         case 'rerollAll':
-            // Reroll all dice
+            // Reroll all dice (Master Mechanic - intentionally re-rolls)
             if (player.lastRollResults && player.lastRollResults.length > 0) {
                 player.roll();
             }
@@ -1058,9 +1073,60 @@ function applyCardEffect(card, player) {
         case 'doubleFuelTotal':
         case 'doubleRoll':
         case 'setDieValue':
-        case 'choice':
             // These effects need more complex handling or UI interaction
             // For now, they are stored in activeCards
+            break;
+
+        // ==========================================
+        // MULTIPLAYER CARD EFFECTS
+        // ==========================================
+        case 'tollRoad':
+            // All other players pay you X gold each
+            if (game.players.length > 1) {
+                let totalCollected = 0;
+                game.players.forEach(p => {
+                    if (p.id !== player.id) {
+                        const payment = Math.min(p.gold, effect.amount);
+                        p.gold -= payment;
+                        totalCollected += payment;
+                    }
+                });
+                player.gainGold(totalCollected);
+            }
+            break;
+
+        case 'alliance':
+            // You and last place player each gain +X distance
+            if (game.players.length > 1) {
+                const sorted = [...game.players].sort((a, b) => a.totalDistance - b.totalDistance);
+                const lastPlace = sorted[0];
+                player.totalDistance += effect.bonus;
+                if (lastPlace.id !== player.id) {
+                    lastPlace.totalDistance += effect.bonus;
+                }
+            } else {
+                // Single player just gets the bonus
+                player.totalDistance += effect.bonus;
+            }
+            break;
+
+        case 'derail':
+            // Leader skips next roll (only works if you're not in lead)
+            if (game.players.length > 1) {
+                const sorted = [...game.players].sort((a, b) => b.totalDistance - a.totalDistance);
+                const leader = sorted[0];
+                if (leader.id !== player.id) {
+                    leader.skipNextRoll = true;
+                }
+            }
+            break;
+
+        case 'jointGold':
+        case 'stealGold':
+        case 'sabotage':
+            // These require player targeting UI - for now just store in activeCards
+            // TODO: Implement player targeting modal
+            console.log(`Card ${card.name} requires player targeting - not yet implemented`);
             break;
     }
 }
@@ -1099,6 +1165,18 @@ async function handleRollDice() {
     // Host/single-player: run locally
     if (!isLocalPlayerTurn()) return;
 
+    const player = game.getCurrentPlayer();
+
+    // Check if player was derailed (skips roll phase)
+    if (player.skipNextRoll) {
+        player.skipNextRoll = false;
+        // Set empty roll results so station phase works
+        player.lastRollResults = [];
+        // Auto-advance to station with 0 distance
+        handleAdvanceToStation();
+        return;
+    }
+
     elements.rollDiceBtn.disabled = true;
 
     // Start animation and sound
@@ -1107,7 +1185,6 @@ async function handleRollDice() {
 
     // Actually roll
     const results = game.rollDice();
-    const player = game.getCurrentPlayer();
     const total = player.getLastRollTotal();
     const rerollsRemaining = player.getTotalRerollsRemaining();
     const fuelBonus = player.fuel;
@@ -1261,6 +1338,30 @@ function handlePurchaseCard(cardIndex) {
     }
 }
 
+// Handle draw random card
+function handleDrawRandomCard() {
+    // Client: send to host
+    if (isMultiplayer && !isHost) {
+        gameSync.sendDrawRandom();
+        return;
+    }
+
+    // Host/single-player: run locally
+    if (!isLocalPlayerTurn()) return;
+
+    const card = game.drawRandomCard();
+    if (card) {
+        soundSystem.playPurchase();
+        refreshShopDisplay();
+        const player = game.getCurrentPlayer();
+        renderCardHand(player.cardHand, handlePlayCard);
+
+        if (isMultiplayer) {
+            gameSync.broadcastGameState();
+        }
+    }
+}
+
 // Refresh shop display after a purchase
 function refreshShopDisplay() {
     const state = game.getState();
@@ -1271,8 +1372,10 @@ function refreshShopDisplay() {
         player,
         state.availableCars,
         state.availableCards,
+        game.deck.length,
         handlePurchaseTrainCar,
-        handlePurchaseCard
+        handlePurchaseCard,
+        handleDrawRandomCard
     );
 }
 

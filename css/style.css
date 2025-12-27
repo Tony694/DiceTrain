@@ -726,6 +726,12 @@ body {
     grid-template-columns: 2fr 1fr;
     gap: 24px;
     margin-bottom: 24px;
+    align-items: stretch;
+}
+
+.shop-section {
+    display: flex;
+    flex-direction: column;
 }
 
 .shop-section h4 {
@@ -880,8 +886,42 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 400px;
     overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Random draw option styling */
+.shop-item.shop-item-random {
+    background: linear-gradient(135deg, var(--leather), var(--wood-medium));
+    border-color: var(--brass);
+}
+
+.shop-item.shop-item-random:hover:not(.disabled) {
+    background: linear-gradient(135deg, var(--leather), var(--wood-medium));
+    border-color: var(--brass-light);
+    box-shadow: 0 0 12px rgba(181, 137, 58, 0.5);
+}
+
+.shop-item.shop-item-random .shop-item-name,
+.shop-item.shop-item-random .shop-item-cost {
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.shop-item.shop-item-random .shop-item-desc {
+    color: #e8e0d0;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.shop-item.shop-item-random.disabled {
+    opacity: 0.6;
+    background: linear-gradient(135deg, var(--wood-light), var(--wood-medium));
+}
+
+.card-random {
+    background: var(--brass);
+    color: var(--wood-dark);
 }
 
 .shop-item {
@@ -1505,6 +1545,12 @@ body {
     opacity: 0.5;
 }
 
+.sound-btn.active {
+    background: var(--brass);
+    border-color: var(--brass-light);
+    box-shadow: 0 0 10px rgba(181, 137, 58, 0.5);
+}
+
 .sound-icon {
     font-size: 1.2rem;
 }
@@ -1581,6 +1627,11 @@ body {
 .card-onetime {
     background: var(--wood-light);
     color: var(--parchment);
+}
+
+.card-multiplayer {
+    background: var(--copper);
+    color: var(--aged-white);
 }
 
 .draft-card .card-type {

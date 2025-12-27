@@ -120,12 +120,37 @@ export function renderTrainCarShop(container, cars, playerGold, playerDistance, 
     });
 }
 
-// Render enhancement cards for purchase (all one-time effects now)
-export function renderEnhancementShop(container, cards, playerGold, onPurchase) {
+// Render enhancement cards for purchase (all cost 5g, one-time effects)
+export function renderEnhancementShop(container, cards, playerGold, deckSize, onPurchase, onDrawRandom) {
     container.innerHTML = '';
 
+    // Add "Draw Random Card" option at the top
+    const randomOption = document.createElement('div');
+    randomOption.className = 'shop-item shop-item-random';
+    if (playerGold < 5 || deckSize === 0) {
+        randomOption.classList.add('disabled');
+    }
+
+    randomOption.innerHTML = `
+        <div class="shop-item-header">
+            <span class="shop-item-name">Draw Random Card</span>
+            <span class="shop-item-cost">5g</span>
+        </div>
+        <div class="shop-item-desc">Draw a random card from the deck (${deckSize} cards remaining)</div>
+        <div class="shop-item-type card-random">Random</div>
+    `;
+
+    if (playerGold >= 5 && deckSize > 0) {
+        randomOption.addEventListener('click', () => onDrawRandom());
+    }
+    container.appendChild(randomOption);
+
+    // Show available cards
     if (cards.length === 0) {
-        container.innerHTML = '<p class="shop-item-desc">No cards available</p>';
+        const emptyMsg = document.createElement('p');
+        emptyMsg.className = 'shop-item-desc';
+        emptyMsg.textContent = 'No cards on display';
+        container.appendChild(emptyMsg);
         return;
     }
 
@@ -136,13 +161,17 @@ export function renderEnhancementShop(container, cards, playerGold, onPurchase) 
             item.classList.add('disabled');
         }
 
+        // Add multiplayer indicator for multiplayer cards
+        const typeLabel = card.multiplayer ? 'Multiplayer' : 'One-Time';
+        const typeClass = card.multiplayer ? 'card-multiplayer' : 'card-onetime';
+
         item.innerHTML = `
             <div class="shop-item-header">
                 <span class="shop-item-name">${card.name}</span>
                 <span class="shop-item-cost">${card.cost}g</span>
             </div>
             <div class="shop-item-desc">${card.description}</div>
-            <div class="shop-item-type card-onetime">One-Time</div>
+            <div class="shop-item-type ${typeClass}">${typeLabel}</div>
         `;
 
         if (playerGold >= card.cost) {

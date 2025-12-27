@@ -549,10 +549,10 @@ export function renderStationEarnings(earnings, fuelGained) {
 }
 
 // Render shop
-export function renderShop(player, cars, cards, onPurchaseCar, onPurchaseCard) {
+export function renderShop(player, cars, cards, deckSize, onPurchaseCar, onPurchaseCard, onDrawRandom) {
     elements.shopPlayerGold.textContent = player.gold;
     renderTrainCarShop(elements.trainCarShop, cars, player.gold, player.totalDistance, onPurchaseCar);
-    renderEnhancementShop(elements.enhancementShop, cards, player.gold, onPurchaseCard);
+    renderEnhancementShop(elements.enhancementShop, cards, player.gold, deckSize, onPurchaseCard, onDrawRandom);
 }
 
 // Render final standings
